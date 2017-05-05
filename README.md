@@ -1,0 +1,2 @@
+# node-dynamo
+DynamoDB helpers
