@@ -1,0 +1,35 @@
+{
+  "name": "dynamo-node",
+  "version": "1.0.0",
+  "description": "AWS DynamoDB api wrapper",
+  "main": "dynamoDB.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.49.0",
+    "promise-fail": "^1.0.1"
+  },
+  "devDependencies": {
+    "mocha": "^3.3.0"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AbdullahZN/node-dynamo.git"
+  },
+  "keywords": [
+    "dynamodb",
+    "dynamo",
+    "node",
+    "aws-sdk"
+  ],
+  "author": "Abdullah Uzun",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AbdullahZN/node-dynamo/issues"
+  },
+  "homepage": "https://github.com/AbdullahZN/node-dynamo#readme"
+}

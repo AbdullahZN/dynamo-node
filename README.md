@@ -29,33 +29,42 @@ Necessary configuration JSON content
 ### Usage
 
 ---
+In the following methods, first parameter is always the name of the table querying from.
+
+#### Models
+
+Init your model, this works even if 'users' table is not created yet
+We'll use the above model in further examples
+
+```js
+const UserModel = DynamoDB.select('users');
+```
 
 #### Tables
 
 _**Create**_
 
 ```js
-DynamoDB.createTable({
-    TableName : "Movies",
+UserModel.createTable({
     KeySchema: [       
-        { AttributeName: "year", KeyType: "HASH"},  //Partition key
-        { AttributeName: "title", KeyType: "RANGE" }  //Sort key
+        { AttributeName: "uid", KeyType: "HASH"},  //Partition key
+        { AttributeName: "name", KeyType: "RANGE" }  //Sort key
     ],
     AttributeDefinitions: [       
-        { AttributeName: "year", AttributeType: "N" },
-        { AttributeName: "title", AttributeType: "S" }
+        { AttributeName: "uid", AttributeType: "N" },
+        { AttributeName: "name", AttributeType: "S" }
     ],
     ProvisionedThroughput: {       
         ReadCapacityUnits: 10,
         WriteCapacityUnits: 10
-    })
+    }
 });
 ```
 
 _**Delete**_
 
 ```js
-DynamoDB.deleteTable({ TableName: "Movies" });
+UserModel.deleteTable();
 ```
 
 ---
@@ -65,38 +74,30 @@ DynamoDB.deleteTable({ TableName: "Movies" });
 _**Add**_
 
 ```js
-DynamoDB.add({
-  TableName: 'Rooms',
-  Item: {
-    name: "privateRoom",
-    participants: ["A", "B", "C", "D"],
-    last: "D"  
-  }
+UserModel.add({
+  uid: O123456, // Uniq Key
+  participants: ["A", "B", "C", "D"],
+  last: "D"
 });
 ```
 
 _**Get**_
 
 ```js
-DynamoDB.get({ TableName: "Rooms", Key: {name: "privateRoom"} });
+UserModel.get({ name: "abdu" });
 ```
 
 _**Update**_
 
 ```js
-DynamoDB.update({
-  TableName: "Rooms",
-  Key: { name: 'myRoom' },
-  update: {
-    participants: ["abdu", "chris"],
-    last: "A",
-    totalParticipants: 450,
-  }
-})
+UserModel.update({ uid: 05435 }, {
+  friends: ["abdu", "chris"],
+  points: 450,
+});
 ```
 
 _**Delete**_
 
 ```js
-DynamoDB.delete({ TableName: "Rooms", Key: { name: "privateRoom" } });
+UserModel.delete({ identifier: "abdu" });
 ```
