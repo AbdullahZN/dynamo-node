@@ -43,12 +43,13 @@ describe('DynamoDB Table', function() {
                 .then(() => done())
                 .catch(done);
         });
+
         it('should fail if primary key is not provided', function(done){
             ExistingTable
                 .add({ size: 4 })
                 .then(() => done(new Error('should not add if key is not provided')))
                 .catch(() => done());
-        })
+        });
     });
 
     describe('#get(Item)', function() {
@@ -80,11 +81,11 @@ describe('DynamoDB Table', function() {
                 .catch(() => done());
         });
 
-        it('should fail if attribute object is not provided, and', function(done){
+        it('should fail if attribute object is not provided', function(done){
             ExistingTable
                 .update({ name: "Hello" })
                 .then(() => done(new Error()))
-                .catch(() => done());
+                .catch(() => done())
         });
     });
 

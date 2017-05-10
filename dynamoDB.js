@@ -21,7 +21,7 @@ module.exports      = (configPath, silent) => {
         add(Item) {
             return new Promise((resolve, reject) => {
                 docClient.put({ TableName, Item }, (err, data) => {
-                    !err && resolve(true);
+                    !err && resolve('added Item');
                     logErr(err, `DynamoDB: Error adding to ${TableName}`);
                     reject(err);
                 })
@@ -40,8 +40,9 @@ module.exports      = (configPath, silent) => {
 
         update(Key, update = {}) {
             const updateKeys = Object.keys(update);
-            updateKeys.length || Promise.reject(new Error('Update object is empty'));
-            const updateExpression = updateKeys;
+            if (!updateKeys.length)
+                return Promise.reject(new Error('Update object is empty'));
+            const updateExpression = updateKeys
                 .map((key, index) => ` ${key} = :${getChar(index)},`)
                 .join('')
                 .slice(0, -1);
@@ -67,7 +68,7 @@ module.exports      = (configPath, silent) => {
         delete(Key) {
             return new Promise((resolve, reject) => {
                 docClient.delete({ TableName, Key }, (err, data) => {
-                    !err && resolve(true);
+                    !err && resolve('delete Item');
                     logErr(err, `DynamoDB: Unable to delete item in ${TableName}`)
                     reject(err)
                 });
