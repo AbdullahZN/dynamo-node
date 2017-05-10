@@ -29,12 +29,12 @@ Necessary configuration JSON content
 ### Usage
 
 ---
-In the following methods, first parameter is always the name of the table querying from.
 
 #### Models
 
 Init your model, this works even if 'users' table is not created yet
-We'll use the above model in further examples
+
+We'll use the same model in further examples
 
 ```js
 const UserModel = DynamoDB.select('users');
