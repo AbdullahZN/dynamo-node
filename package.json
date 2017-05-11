@@ -1,6 +1,6 @@
 {
   "name": "dynamo-node",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "AWS DynamoDB api wrapper",
   "main": "dynamoDB.js",
   "directories": {
