@@ -1,5 +1,5 @@
 const assert = require('assert');
-const DynamoDB = require('../dynamoDB')('./credits.json', true);
+const DynamoDB = require('../dynamoDB')('./credits.json', false);
 
 Promise.fail = require('promise-fail');
 

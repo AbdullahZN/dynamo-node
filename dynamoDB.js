@@ -3,17 +3,16 @@ const AWS = require("aws-sdk");
 // Helpers
 const stringify     = (object)      => JSON.stringify(object, null, 2);
 const getChar       = (int)         => String.fromCharCode(int + 97);
-let logErr          = (err, msg)    => console.log(`${msg} > ${stringify(err)}`);
+const Err           = (err, msg)    => new Error(`${msg} > ${stringify(err)}`);
 
 // Polyfills
 Object.values = Object.values || ((obj) => Object.keys(obj).map(key => obj[key]));
 
 // Exports DynamoDB function that returns an object of methods
-module.exports      = (configPath, silent) => {
+module.exports      = (configPath) => {
     AWS.config.loadFromPath(configPath);
     const docClient = new AWS.DynamoDB.DocumentClient();
     const dynamo    = new AWS.DynamoDB();
-    silent && (logErr = () => '');
 
     const getMethods = (TableName) => ({
 
@@ -21,9 +20,8 @@ module.exports      = (configPath, silent) => {
         add(Item) {
             return new Promise((resolve, reject) => {
                 docClient.put({ TableName, Item }, (err, data) => {
-                    !err && resolve('added Item');
-                    logErr(err, `DynamoDB: Error adding to ${TableName}`);
-                    reject(err);
+                    err && reject(Err(err, `DynamoDB: Error adding to ${TableName}`));
+                    resolve('added Item');
                 })
             });
         },
@@ -31,9 +29,8 @@ module.exports      = (configPath, silent) => {
         get(Key) {
             return new Promise((resolve, reject) => {
                 docClient.get({ TableName, Key }, (err, data) => {
-                    !err && resolve(data);
-                    logErr(err, `DynamoDB: Error querying from ${TableName}`)
-                    reject(err);
+                    err && reject(Err(err, `DynamoDB: Error querying from ${TableName}`));
+                    resolve(data);
                 });
             });
         },
@@ -58,9 +55,8 @@ module.exports      = (configPath, silent) => {
 
             return new Promise((resolve, reject) => {
                 docClient.update(params, (err, data) => {
-                    !err && resolve(data);
-                    logErr(err, `DynamoDB: Error updating in ${TableName}`);
-                    reject(err);
+                    err && reject(Err(err, `DynamoDB: Error updating in ${TableName}`));
+                    resolve(data);
                 });
             });
         },
@@ -68,9 +64,8 @@ module.exports      = (configPath, silent) => {
         delete(Key) {
             return new Promise((resolve, reject) => {
                 docClient.delete({ TableName, Key }, (err, data) => {
-                    !err && resolve('delete Item');
-                    logErr(err, `DynamoDB: Unable to delete item in ${TableName}`)
-                    reject(err)
+                    err && reject(Err(err, `DynamoDB: Unable to delete item in ${TableName}`))
+                    resolve('delete Item');
                 });
             });
         },
@@ -79,13 +74,13 @@ module.exports      = (configPath, silent) => {
         createTable(params) {
             params.TableName = TableName;
             return new Promise((resolve, reject) =>
-                dynamo.createTable(params, (err, data) => err ? reject() : resolve(data))
+                dynamo.createTable(params, (err, data) => err ? reject(err) : resolve(data))
             ).catch(err => logErr(err, `DynamoDB: Unable to create ${TableName}`));
         },
 
         deleteTable() {
             return new Promise((resolve, reject) =>
-                dynamo.deleteTable({ TableName }, (err, data) => err ? reject() : resolve(true))
+                dynamo.deleteTable({ TableName }, (err, data) => err ? reject(err) : resolve(true))
             ).catch(err => logErr(err, `DynamoDB: Unable to delete ${TableName}`));
         },
 
