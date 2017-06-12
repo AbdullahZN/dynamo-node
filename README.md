@@ -1,19 +1,17 @@
-# pretty simple DynamoDB ORM
-
-DynamoDB helpers
+# DynamoDB ORM
 
 ### Requirements
 
-Install official aws-sdk package from npm or yarn
+Install package from npm or yarn
 
 ```bash
-> npm install aws-sdk || yarn add aws-sdk
+> npm install dynamo-node || yarn add dynamo-node
 ```
 
 Require module and pass AWS configuration JSON as parameter
 
 ```js
-const DynamoDB = require('./dynamoDB')('./credits.json');
+const DynamoDB = require('dynamo-node')('./credits.json');
 ```
 
 Necessary configuration JSON content
@@ -37,6 +35,7 @@ Init your model, this works even if 'users' table is not created yet
 We'll use the same model in further examples
 
 ```js
+// "users" refers to the TableName we want to query from
 const UserModel = DynamoDB.select('users');
 ```
 
@@ -47,8 +46,8 @@ _**Create**_
 ```js
 UserModel.createTable({
     KeySchema: [       
-        { AttributeName: "uid", KeyType: "HASH"},  //Partition key
-        { AttributeName: "name", KeyType: "RANGE" }  //Sort key
+        { AttributeName: "name", KeyType: "HASH"},  //Partition key
+        { AttributeName: "uid", KeyType: "RANGE" }  //Sort key
     ],
     AttributeDefinitions: [       
         { AttributeName: "uid", AttributeType: "N" },
@@ -75,7 +74,7 @@ _**Add**_
 
 ```js
 UserModel.add({
-  name: "abdu", // Uniq Key
+  name: "abdu", // Primary Key
   participants: ["A", "B", "C", "D"],
   last: "D"
 });
@@ -102,7 +101,9 @@ _**Delete**_
 UserModel.delete({ name: "abdu" });
 ```
 
-You can also select a specific item following this example :
+#### 
+
+#### You can also select a specific item following this example :
 
 _**getItemObject**_
 
@@ -110,7 +111,7 @@ _**getItemObject**_
 const Abdu = UserModel.getItemObject({ name: "abdu" });
 ```
 
-_**This give you access to the parent Model methods ( except for #Add ), without worrying about the primary Key**_
+_**This give you access to the parent Model methods \( except for \#Add \), without worrying about the primary Key**_
 
 ```js
 Abdu.get();
@@ -120,3 +121,55 @@ Abdu.update({
 });
 Abdu.delete();
 ```
+
+---
+
+#### Return values
+
+Following previous examples, here's how you handle return values from each methods.
+
+> Note: All methods return promises
+
+```js
+// outputs "Abdu"
+Abdu.get()
+    .then(item => console.log(item.name));
+
+// outputs "26"
+Abdu.update({ age: "26" })
+    .then(item => console.log(item.age));
+
+// both outputs "{}"
+Abdu.delete()
+    .then(item => console.log(item));
+
+UserModel.add({ name: "Chris", age: "65" })
+    .then(item => console.log(item));
+
+// both outputs "object"
+UserModel.createTable( tableSchema )
+    .then(table => console.log(typeof table));
+
+UserModel.deleteTable()
+    .then(table => console.log(typeof table));
+```
+
+You can catch errors like you would usually do
+
+---
+
+#### Tests
+
+Tests are located in the **./tests** folder  
+Note that you have to create a Table named "**aws.table.for.testing**" in order for them to run correctly.
+
+Here's full testing process using npm scripts
+
+```bash
+> npm run createTable // can take a few seconds to be created even if process exits
+> npm run test
+> npm run deleteTable
+```
+
+
+
