@@ -10,6 +10,8 @@ Object.values = Object.values || ((obj) => Object.keys(obj).map(key => obj[key])
 
 // Exports DynamoDB function that returns an object of methods
 module.exports      = (configPath) => {
+
+    // Immediately init DynamoDB from config file
     AWS.config.loadFromPath(configPath);
     const docClient = new AWS.DynamoDB.DocumentClient();
     const dynamo    = new AWS.DynamoDB();
@@ -64,7 +66,7 @@ module.exports      = (configPath) => {
         delete(Key) {
             return new Promise((resolve, reject) => {
                 docClient.delete({ TableName, Key }, (err, data) => {
-                    err && reject(Err(err, `DynamoDB: Unable to delete item in ${TableName}`))
+                    err && reject(Err(err, `DynamoDB: Unable to delete item in ${TableName}`));
                     resolve('delete Item');
                 });
             });
@@ -72,16 +74,21 @@ module.exports      = (configPath) => {
 
         // Tables
         createTable(params) {
-            params.TableName = TableName;
-            return new Promise((resolve, reject) =>
-                dynamo.createTable(params, (err, data) => err ? reject(err) : resolve(data))
-            ).catch(err => logErr(err, `DynamoDB: Unable to create ${TableName}`));
+            return new Promise((resolve, reject) => {
+                dynamo.createTable(params, (err, data) => {
+                    err && reject(Err(err, `DynamoDB: Unable to create ${TableName}`));
+                    resolve(data);
+                });
+            });
         },
 
         deleteTable() {
-            return new Promise((resolve, reject) =>
-                dynamo.deleteTable({ TableName }, (err, data) => err ? reject(err) : resolve(true))
-            ).catch(err => logErr(err, `DynamoDB: Unable to delete ${TableName}`));
+            return new Promise((resolve, reject) => {
+                dynamo.deleteTable({ TableName }, (err, data) => {
+                    err && reject(Err(err, `DynamoDB: Unable to delete ${TableName}`));
+                    resolve(data);
+                });
+            });
         },
 
         // Utils
@@ -89,7 +96,6 @@ module.exports      = (configPath) => {
     });
 
     return {
-
         // Select Table and return method object for further queries
         select: (TableName) => getMethods(TableName),
     }
