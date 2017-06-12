@@ -1,4 +1,4 @@
-# node-dynamo
+# pretty simple DynamoDB ORM
 
 DynamoDB helpers
 
@@ -75,7 +75,7 @@ _**Add**_
 
 ```js
 UserModel.add({
-  uid: O123456, // Uniq Key
+  name: "abdu", // Uniq Key
   participants: ["A", "B", "C", "D"],
   last: "D"
 });
@@ -90,7 +90,7 @@ UserModel.get({ name: "abdu" });
 _**Update**_
 
 ```js
-UserModel.update({ uid: 05435 }, {
+UserModel.update({ name: "abdu" }, {
   friends: ["abdu", "chris"],
   points: 450,
 });
@@ -99,5 +99,24 @@ UserModel.update({ uid: 05435 }, {
 _**Delete**_
 
 ```js
-UserModel.delete({ identifier: "abdu" });
+UserModel.delete({ name: "abdu" });
+```
+
+You can also select a specific item following this example :
+
+_**getItemObject**_
+
+```js
+const Abdu = UserModel.getItemObject({ name: "abdu" });
+```
+
+_**This give you access to the parent Model methods ( except for #Add ), without worrying about the primary Key**_
+
+```js
+Abdu.get();
+Abdu.update({
+  friends: ["abdu", "chris", "frank"],
+  points: 650,
+});
+Abdu.delete();
 ```

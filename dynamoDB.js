@@ -1,12 +1,7 @@
 const AWS = require("aws-sdk");
-
+const getUpdateExpression = require('./expressions');
 // Helpers
 const stringify     = (object)      => JSON.stringify(object, null, 2);
-const getChar       = (int)         => String.fromCharCode(int + 97);
-const Err           = (err, msg)    => new Error(`${msg} > ${stringify(err)}`);
-
-// Polyfills
-Object.values = Object.values || ((obj) => Object.keys(obj).map(key => obj[key]));
 
 // Exports DynamoDB function that returns an object of methods
 module.exports      = (configPath) => {
@@ -16,88 +11,69 @@ module.exports      = (configPath) => {
     const docClient = new AWS.DynamoDB.DocumentClient();
     const dynamo    = new AWS.DynamoDB();
 
-    const getMethods = (TableName) => ({
+    // gets docClient function to return promise
+    const query = (method, params) => {
+        return new Promise( (resolve, reject) => {
+            docClient[ method ](params, (err, data) => {
+                err
+                    ? reject(new Error(`DynamoDB > ${stringify(err)}`))
+                    : resolve(data);
+            });
+        });
+    };
+
+    const db = (method, params) => {
+        return new Promise( (resolve, reject) => {
+            dynamo[ method ](params, (err, data) => {
+                err
+                    ? reject(new Error(`DynamoDB > ${stringify(err)}`))
+                    : resolve(data);
+            });
+        });
+    }
+
+    // handles object
+
+    const getTableMethods = (TableName) => ({
 
         // CRUD Methods
-        add(Item) {
-            return new Promise((resolve, reject) => {
-                docClient.put({ TableName, Item }, (err, data) => {
-                    err && reject(Err(err, `DynamoDB: Error adding to ${TableName}`));
-                    resolve('added Item');
-                })
-            });
+        add: (Item) => query('put', { TableName, Item }),
+
+        get: (Key)  => query('get', { TableName, Key }).then(({ Item }) => Item),
+
+        update: (Key, updateObject = {}) => {
+            return query('update', getUpdateExpression(updateObject, TableName, Key))
+                .then(({ Attributes }) => Attributes);
         },
 
-        get(Key) {
-            return new Promise((resolve, reject) => {
-                docClient.get({ TableName, Key }, (err, data) => {
-                    err && reject(Err(err, `DynamoDB: Error querying from ${TableName}`));
-                    resolve(data);
-                });
-            });
-        },
-
-        update(Key, update = {}) {
-            const updateKeys = Object.keys(update);
-            if (!updateKeys.length)
-                return Promise.reject(new Error('Update object is empty'));
-            const updateExpression = updateKeys
-                .map((key, index) => ` ${key} = :${getChar(index)},`)
-                .join('')
-                .slice(0, -1);
-            const ExpressionValues = Object.values(update)
-                .reduce((acc, value, index) => (acc[`:${getChar(index)}`] = value) && acc, {});
-            const params = {
-                TableName,
-                Key,
-                UpdateExpression: `set${updateExpression}`,
-                ExpressionAttributeValues: ExpressionValues,
-                ReturnValues: "UPDATED_NEW"
-            };
-
-            return new Promise((resolve, reject) => {
-                docClient.update(params, (err, data) => {
-                    err && reject(Err(err, `DynamoDB: Error updating in ${TableName}`));
-                    resolve(data);
-                });
-            });
-        },
-
-        delete(Key) {
-            return new Promise((resolve, reject) => {
-                docClient.delete({ TableName, Key }, (err, data) => {
-                    err && reject(Err(err, `DynamoDB: Unable to delete item in ${TableName}`));
-                    resolve('delete Item');
-                });
-            });
-        },
+        delete: (Key) => query('delete', { TableName, Key }),
 
         // Tables
-        createTable(params) {
-            return new Promise((resolve, reject) => {
-                dynamo.createTable(params, (err, data) => {
-                    err && reject(Err(err, `DynamoDB: Unable to create ${TableName}`));
-                    resolve(data);
-                });
-            });
+        createTable: (params) => {
+            params.TableName = TableName;
+            return db('createTable', params)
+                .then(({ TableDescription }) => TableDescription);
         },
 
-        deleteTable() {
-            return new Promise((resolve, reject) => {
-                dynamo.deleteTable({ TableName }, (err, data) => {
-                    err && reject(Err(err, `DynamoDB: Unable to delete ${TableName}`));
-                    resolve(data);
-                });
-            });
-        },
+        deleteTable: () => db('deleteTable', { TableName }),
 
         // Utils
-        getTableName: () => TableName,
+        getItemObject(Key) {
+            return {
+                get:    ()      => this.get(Key),
+                delete: ()      => this.delete(Key),
+                update: params  => this.update(Key, params),
+            }
+        },
+
+        getTableName() {
+            return TableName;
+        }
     });
 
     return {
         // Select Table and return method object for further queries
-        select: (TableName) => getMethods(TableName),
+        select: (TableName) => getTableMethods(TableName),
     }
 
 }

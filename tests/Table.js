@@ -1,27 +1,10 @@
 const assert = require('assert');
-const DynamoDB = require('../dynamoDB')('./credits.json', false);
-
+const DynamoDB = require('../dynamoDB')('./credits.json');
 Promise.fail = require('promise-fail');
-
-describe('DynamoDB', function() {
-    describe('#select(TableName)', function(){
-        const Rooms = DynamoDB.select('rooms');
-        it('should return object', function(){
-            assert(typeof Rooms === 'object');
-        });
-        it('should return provided TableName', function() {
-            assert(Rooms.getTableName() === "rooms");
-        });
-        it('should return object of query methods', function(){
-            assert(Rooms.hasOwnProperty('add'));
-            assert(typeof Rooms.add === 'function');
-        });
-    });
-});
 
 describe('DynamoDB Table', function() {
     const UnexistingTable = DynamoDB.select('UnexistingTable');
-    const ExistingTable = DynamoDB.select('rooms');
+    const ExistingTable = DynamoDB.select('aws.table.for.testing');
 
     describe('if Table does not exist', function() {
         it('should fail on all CRUD Methods', function(done){
