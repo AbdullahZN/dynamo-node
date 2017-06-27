@@ -1,5 +1,6 @@
 # DynamoDB ORM
 [![Travis-ci](https://travis-ci.org/AbdullahZN/DynamoDB.svg?branch=master)](https://travis-ci.org/AbdullahZN/DynamoDB)
+[![Code Climate](https://codeclimate.com/github/AbdullahZN/DynamoDB/badges/gpa.svg)](https://codeclimate.com/github/AbdullahZN/DynamoDB)
 
 ### Requirements
 
