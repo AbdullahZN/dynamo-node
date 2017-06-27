@@ -1,5 +1,5 @@
 const assert = require('assert');
-const DynamoDB = require('../dynamoDB')('./credits.json');
+const DynamoDB = require('../dynamoDB')();
 
 describe('DynamoDB', function() {
     describe('#select(TableName)', function(){

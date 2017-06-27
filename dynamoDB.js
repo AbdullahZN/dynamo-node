@@ -3,34 +3,32 @@ const getUpdateExpression = require('./expressions');
 // Helpers
 const stringify     = (object)      => JSON.stringify(object, null, 2);
 
-// Exports DynamoDB function that returns an object of methods
-module.exports      = (configPath) => {
-
-    // Immediately init DynamoDB from config file
-    AWS.config.loadFromPath(configPath);
-    const docClient = new AWS.DynamoDB.DocumentClient();
-    const dynamo    = new AWS.DynamoDB();
-
-    // gets docClient function to return promise
-    const query = (method, params) => {
+const getPromise = (func) => {
+    return (method, params) => {
         return new Promise( (resolve, reject) => {
-            docClient[ method ](params, (err, data) => {
+            func[ method ](params, (err, data) => {
                 err
-                    ? reject(new Error(`DynamoDB > ${stringify(err)}`))
-                    : resolve(data);
+                ? reject(new Error(`DynamoDB > ${stringify(err)}`))
+                : resolve(data);
             });
         });
     };
+};
 
-    const db = (method, params) => {
-        return new Promise( (resolve, reject) => {
-            dynamo[ method ](params, (err, data) => {
-                err
-                    ? reject(new Error(`DynamoDB > ${stringify(err)}`))
-                    : resolve(data);
-            });
-        });
-    }
+// Exports DynamoDB function that returns an object of methods
+module.exports      = (configPath) => {
+
+    if (! (configPath || process.env.AWS_ACCESS_KEY_ID) )
+        return console.error("No AWS_ACCESS_KEY_ID found");
+
+    // Immediately init DynamoDB from config file
+    if (configPath)
+        AWS.config.loadFromPath(configPath);
+    AWS.config.update({ region: 'eu-central-1' });
+
+    // gets docClient function to return promise
+    const query = getPromise(new AWS.DynamoDB.DocumentClient());
+    const db = getPromise(new AWS.DynamoDB());
 
     // handles object
 

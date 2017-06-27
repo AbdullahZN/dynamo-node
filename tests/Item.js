@@ -1,4 +1,4 @@
-const DynamoDB = require('../dynamoDB')('./credits.json');
+const DynamoDB = require('../dynamoDB')();
 const assert = require('chai').assert;
 const expect = require('chai').expect;
 
