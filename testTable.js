@@ -1,4 +1,4 @@
-const DynamoDB = require('./dynamoDB')('./credits.json');
+const DynamoDB = require('./dynamoDB');
 const arg = process.argv[2];
 
 const params = {

@@ -1,68 +1,68 @@
-const assert = require('assert');
-const DynamoDB = require('../dynamoDB')('./credits.json');
-const Table = DynamoDB.select('users');
+const assert = require('chai').assert;
+const DynamoDB = require('../index')('eu-central-1');
+const Table = DynamoDB.select('aws.table.for.testing');
 
-Table.current = function (){
-    const c = this.ConditionExpression;
+Table.reset = function () {
+    console.log(this.ConditionExpression, this.ExpressionValues);
     this.ConditionExpression = [];
-    return c.join(' ');
+    this.ExpressionValues = {};
+    this.ExpressionNames = {};
+    this.resetExpressionValueGenerator();
 }
 
 describe('DynamoDB Conditional Expression Builder', function() {
 
     describe('#where()', function(){
-        it('should write expression as a function if given condition is a function', function() {
-            assert.equal(Table.where('a', 'beginsWith', 'b').current(), 'begins_with(a, b)');
-            assert.equal(Table.where('c', 'contains', 'd').current(), 'contains(c, d)');
-            assert.equal(Table.where('e', 'typeIs', 'f').current(), 'attribute_type(e, f)');
+        it('should write expression values corresponding to expression condition attributes', function() {
+            Table.where('a', 'beginsWith', '0');
+            Table.where('c', 'contains', '1');
+            Table.where('e', 'typeIs', '2');
+            assert.include(Table.ConditionExpression, 'begins_with(a, :a)');
+            assert.include(Table.ConditionExpression, 'contains(c, :b)');
+            assert.include(Table.ConditionExpression, 'attribute_type(e, :c)');
+            assert.equal(Table.ExpressionValues[':a'], 0);
+            assert.equal(Table.ExpressionValues[':b'], 1);
+            assert.equal(Table.ExpressionValues[':c'], 2);
+            Table.reset();
+        });
+    });
+
+    describe('#notExists()', function(){
+        it('should execute without error', function(done) {
+            Table.notExists('nonexistingprop').add({ name: 'Abdu', prono: 'hellox' })
+                .then(() => done())
+                .catch(done);
+            Table.delete({ name: 'Abdu' });
         });
     });
 
     describe('#if()', function() {
-        it('should write expression as a comparison if given condition is a comparator', function() {
-            assert.equal(Table.if('a = b').current(), 'a = b');
-            assert.equal(Table.if('c != d').current(), 'c <> d');
-            assert.equal(Table.if('c <> d').current(), 'c <> d');
-            assert.equal(Table.if('e < f').current(), 'e < f');
-            assert.equal(Table.if('g <= h').current(), 'g <= h');
-            assert.equal(Table.if('i > j').current(), 'i > j');
-            assert.equal(Table.if('k >= l').current(), 'k >= l');
-        });
+            it('creates Condition, Values, Names for Expression', function() {
+                ['a = 0', 'b <> 43', 'c < 6'].forEach(condition => {
+                    Table.if( ...(condition.split(' ')) );
+                });
+                const expectedCondition = ['#a = :a', '#b <> :b', '#c < :c'];
+                assert.deepEqual(Table.ConditionExpression, expectedCondition);
+                assert.deepEqual(Table.ExpressionValues, {':a':'0', ':b':'43', ':c':'6'});
+                assert.deepEqual(Table.ExpressionNames, {'#a':'a', '#b':'b', '#c':'c'});
+                Table.reset();
+            });
     });
 
-    describe('#find("attribute")', function(){
-        it('should add "attribute" to ConditionExpression', function() {
-            assert.equal(Table.find("attribute").current(), 'attribute');
-        });
-    });
-    describe('#find.between()', () => {
-        assert.equal(Table.find('totalFriends').between(34, 56).current(), 'totalFriends BETWEEN 34 AND 56');
-    });
-
-    describe('#find.in()', () => {
-        it('should write expression with range', function() {
-            assert.equal(Table.find('totalFriends').in([4, 8, 10]).current(), 'totalFriends IN 4, 8, 10');
-        });
-    });
-
-    describe('query methods after conditionExpression', () => {
-        it('should execute conditional query', function(done) {
-            Table.notExists(['uid'])
-                .add({ uid: "jameson", age: 500 }).then(() => done()).catch(done)
+    describe('#if().add()', function() {
+        it('addItem if condition is evaluated to true', function(done) {
+            Table.add({ name: 'Abdu', age: 33 }).then(() => {
+                return Table.exists('age')
+                    .if('age', '>', 32)
+                    .add({ name: 'Abdu', age: 5346 })
+            }).then(() => done()).catch(done);
         });
 
-        it('should succeed if user whatched more than 500 games', function(done){
-            Table.if('age = 500').get({ uid: "jameson" }).then(Item => {
-                console.log(Item);
-                done();
-            }).catch(done);
-        });
-
-        it('should fail if user whatched less than 500 games', function(done){
-            Table.if('age < 500').get({ uid: "james" }).then(Item => {
-                console.log(Item);
-                done();
-            }).catch(done);
+        it('can not add if not exists', function(done) {
+            Table.delete({ name: 'Abdu' }).then(() => {
+                return Table.exists('age').if('age', '<', 0)
+                    .add({ name: 'Abdu', age: 342 })
+            }).then(() => done(new Error)).catch(() => done());
         });
     });
 
