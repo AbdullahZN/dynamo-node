@@ -28,9 +28,12 @@ module.exports = class ConditionalQueryBuilder extends QueryBuilder {
     }
 
     addExpressionName(attributeName) {
-        const name = `#${attributeName}`;
-        this.ExpressionNames[name] = attributeName;
-        return name;
+        // from a.b.c to #a.#b.#c
+        const names = `#${attributeName}`.replace(/\./g, '.#').split('.');
+        const values = attributeName.split('.');
+        names.forEach((name, index) => { this.ExpressionNames[name] = values[index]; });
+        // back to initial state
+        return names.join('.');
     }
 
     buildConditionalParams(baseParams) {
@@ -59,7 +62,7 @@ module.exports = class ConditionalQueryBuilder extends QueryBuilder {
         return this.getItem(this.buildConditionalParams({ Key }));
     }
 
-    update(Key, updateObject = {}) {
+    update(Key, updateObject = {}, list) {
         this.setExpressionValues(updateObject);
         const params = Object.assign(
             this.buildUpdateParams(),
@@ -117,10 +120,10 @@ module.exports = class ConditionalQueryBuilder extends QueryBuilder {
 
     createConditionList(attributes, condition) {
         if (!Array.isArray(attributes))
-            return this.addCondition(`${condition}(${attributes})`)
+          attributes = [ attributes ];
         const conditionList = [];
         attributes.forEach(attribute => {
-            conditionList.push(`${condition}(${attribute})`);
+            conditionList.push(`${condition}(${this.addExpressionName(attribute)})`);
         });
         return this.addCondition(conditionList.join(' AND '));
     }

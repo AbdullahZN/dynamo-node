@@ -2,7 +2,8 @@
 const getChar       = (int)         => String.fromCharCode(int + 97);
 const RETURN_VALUES = {
     updated: 'UPDATED_NEW',
-    new: 'ALL_NEW'
+    new: 'ALL_NEW',
+    old: 'ALL_OLD'
 }
 // Polyfills
 Object.values = Object.values || ((obj) => Object.keys(obj).map(key => obj[key]));
@@ -33,24 +34,53 @@ module.exports = class QueryBuilder {
         const updateKeys = Object.keys(params);
 
         this.UpdateExpression += updateKeys
-            .map((key, index) => `${key} = :${getChar(index)}`).join(', ');
+            .map((key, index) => {
+                const value = getChar(index);
+                const expressionKey = `:${value}${value}`;
+                this.ExpressionValues[expressionKey] = params[key];
+                return `${key} = :${value}${value}`;
+            }).join(', ');
+    }
 
-        this.ExpressionValues = Object.values(params).reduce((acc, value, key) => {
-            acc[`:${getChar(key)}`] = value;
-            return acc;
-        }, {});
+    addToList(newList) {
+        this.UpdateExpression += Object.keys(newList).map((key, index) => {
+            const value = getChar(index);
+            const expressionKey = `:${value}${value}${value}`;
+            this.ExpressionValues[expressionKey] = newList[key];
+            const expressionName = this.addExpressionName(key);
+            return `${expressionName} = list_append(${expressionName}, ${expressionKey})`;
+        });
+        return this;
+    }
+
+    removeFromList(items) {
+        const removeExpression = Object.keys(items).map((key, index) => {
+            const expressionName = this.addExpressionName(key);
+            return items[key].map(index => `${expressionName}[${index}]`).join(', ');
+        }).join(' AND ');
+
+        this.UpdateExpression = `REMOVE ${removeExpression}`;
+        return this;
     }
 
     buildBaseParams(params) {
-        return Object.assign({ TableName: this.TableName}, params);
+        return Object.assign(
+            { TableName: this.TableName, ReturnValues: RETURN_VALUES['old']},
+            params
+        );
     }
 
     buildUpdateParams() {
-        return {
-            UpdateExpression: this.UpdateExpression,
-            ExpressionAttributeValues: this.ExpressionValues,
-            ReturnValues: RETURN_VALUES['updated']
-        };
+        const params = {};
+
+        params.UpdateExpression = this.UpdateExpression;
+        params.ReturnValues =  RETURN_VALUES['updated'];
+        if (Object.keys(this.ExpressionValues).length)
+            params.ExpressionAttributeValues = this.ExpressionValues;
+
+        this.UpdateExpression = 'SET ';
+        this.ExpressionValues = {};
+        return params;
     }
 
     addItem(params) {
