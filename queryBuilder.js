@@ -38,7 +38,8 @@ module.exports = class QueryBuilder {
                 const value = getChar(index);
                 const expressionKey = `:${value}${value}`;
                 this.ExpressionValues[expressionKey] = params[key];
-                return `${key} = :${value}${value}`;
+                const expressionName = this.addExpressionName(key);
+                return `${expressionName} = :${value}${value}`;
             }).join(', ');
     }
 

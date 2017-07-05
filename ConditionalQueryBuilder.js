@@ -62,7 +62,21 @@ module.exports = class ConditionalQueryBuilder extends QueryBuilder {
         return this.getItem(this.buildConditionalParams({ Key }));
     }
 
-    update(Key, updateObject = {}, list) {
+    removeAttribute(Key, attributes) {
+        this.UpdateExpression = 'REMOVE ' + attributes.map(attribute => {
+            return `${this.addExpressionName(attribute)}`;
+        }).join(', ');
+        const params = Object.assign(
+            this.buildUpdateParams(),
+            this.buildConditionalParams({ Key })
+        );
+        console.log(params);
+        return this.doc('update', params);
+    }
+
+    update(Key, updateObject = {}, type) {
+        if (type)
+            this.UpdateExpression = type;
         this.setExpressionValues(updateObject);
         const params = Object.assign(
             this.buildUpdateParams(),
