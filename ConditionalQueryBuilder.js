@@ -4,108 +4,49 @@ const QueryBuilder = require('./QueryBuilder');
 module.exports = class ConditionalQueryBuilder extends QueryBuilder {
     constructor(...args) {
         super(...args);
-
-        this.ConditionExpression = [];
-        this.ExpressionValues = {};
-        this.ExpressionNames = {};
-
-        this.expression = '';
-        this.resetExpressionValueGenerator();
     }
 
-    resetExpressionValueGenerator() {
-        this.expression = this.expressionValueGenerator(0);
-    }
-
-    getNextExpressionKey() {
-        return this.expression.next().value;
-    }
-
-    addExpressionValue(attributeKey) {
-        const expression = this.getNextExpressionKey();
-        this.ExpressionValues[expression] = attributeKey;
-        return expression;
-    }
-
-    addExpressionName(attributeName) {
-        // from a.b.c to #a.#b.#c
-        const names = `#${attributeName}`.replace(/\./g, '.#').split('.');
-        const values = attributeName.split('.');
-        names.forEach((name, index) => { this.ExpressionNames[name] = values[index]; });
-        // back to initial state
-        return names.join('.');
-    }
-
-    buildConditionalParams(baseParams) {
-        const params = {};
-
-        if (this.ConditionExpression.length)
-            params.ConditionExpression = this.ConditionExpression.join(' AND ');
-        if (Object.keys(this.ExpressionValues).length)
-            params.ExpressionAttributeValues = this.ExpressionValues;
-        if (Object.keys(this.ExpressionNames).length)
-            params.ExpressionAttributeNames = this.ExpressionNames;
-
-        this.ConditionExpression = [];
-        this.ExpressionNames = {};
-        this.ExpressionValues = {};
-        this.resetExpressionValueGenerator();
-        return Object.assign(params, this.buildBaseParams(baseParams));
-    }
-
-    add(Item) {
-        const params = this.buildConditionalParams({ Item });
-        return this.addItem(params);
-    }
-
-    get(Key) {
-        return this.getItem(this.buildConditionalParams({ Key }));
-    }
-
-    removeAttribute(Key, attributes) {
-        this.UpdateExpression = 'REMOVE ' + attributes.map(attribute => {
-            return `${this.addExpressionName(attribute)}`;
-        }).join(', ');
-        const params = Object.assign(
-            this.buildUpdateParams(),
-            this.buildConditionalParams({ Key })
-        );
-        console.log(params);
-        return this.doc('update', params);
-    }
-
-    update(Key, updateObject = {}, type) {
-        if (type)
-            this.UpdateExpression = type;
-        this.setExpressionValues(updateObject);
-        const params = Object.assign(
-            this.buildUpdateParams(),
-            this.buildConditionalParams({ Key })
-        );
-        console.log(params);
-        return this.doc('update', params);
-    }
-
-    delete(Key) {
-        return this.deleteItem(this.buildBaseParams({ Key }));
-    }
-
+    // Queries
     scan() {
-        const params = this.buildConditionalParams();
+        const params = this.buildParams();
+        params.ReturnValues = 'ALL_NEW';
         if (params.ConditionExpression) {
             params.FilterExpression = params.ConditionExpression;
-            delete p['ConditionExpression'];
+            delete params['ConditionExpression'];
         }
         return this.doc('scan', params);
     }
 
-    addCondition(condition) {
-        this.ConditionExpression.push(condition);
-        return this;
+    add(Item) {
+        const params = this.buildParams({ Item });
+        return this.addItem(params);
     }
 
-    find(attribute) {
-        return this.addCondition(attribute);
+    get(Key) {
+        return this.getItem(this.buildParams({ Key }));
+    }
+
+    update(Key, updateParams) {
+        updateParams && this.addUpdateExpression(updateParams);
+        const params = this.buildUpdateParams({ Key });
+        return this.doc('update', params).then(({ Attributes }) => Attributes);
+    }
+
+    delete(Key) {
+        return this.deleteItem(this.buildParams({ Key }));
+    }
+
+    removeAttribute(attributes) {
+        this.addRemoveExpression(attributes)
+        const params = this.buildUpdateParams();
+        return this.doc('update', params);
+    }
+
+    // Conditions
+    //
+    if(a, operator, b) {
+        this.addCondition(`${this.addExpressionName(a)} ${operator} ${this.addExpressionValue(b)}`);
+        return this;
     }
 
     between(x, y) {
@@ -119,17 +60,13 @@ module.exports = class ConditionalQueryBuilder extends QueryBuilder {
         return this.addCondition(`IN ${ array.join(', ') }`);
     }
 
-    if(a, operator, b) {
-        this.addCondition(`${this.addExpressionName(a)} ${operator} ${this.addExpressionValue(b)}`);
-        return this;
-    }
 
     // [ 'beginsWith', 'contains', 'typeIs' ]
-    where(attribute, condition, check) {
+    where(attribute, condition, value) {
         if (!this[condition])
             throw new Error(`${condition} is not a valid condition`);
-        const e = this.addExpressionValue(check);
-        return this[condition](attribute, e);
+        const name = this.addExpressionName(attribute);
+        return this[condition](name, this.addExpressionValue(value));
     }
 
     createConditionList(attributes, condition) {

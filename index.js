@@ -32,6 +32,7 @@ module.exports      = (region, configPath) => {
         select: (TableName) => {
             return new ConditionalQueryBuilder(TableName, doc, db);
         },
+
     };
 
 }
