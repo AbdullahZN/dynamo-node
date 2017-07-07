@@ -36,9 +36,9 @@ module.exports = class ConditionalQueryBuilder extends QueryBuilder {
         return this.deleteItem(this.buildParams({ Key }));
     }
 
-    removeAttribute(attributes) {
+    removeAttribute(Key, attributes) {
         this.addRemoveExpression(attributes)
-        const params = this.buildUpdateParams();
+        const params = this.buildUpdateParams({ Key });
         return this.doc('update', params);
     }
 
