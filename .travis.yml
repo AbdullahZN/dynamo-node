@@ -1,0 +1,8 @@
+before_install:
+  - npm i -g mocha chai
+language: node_js
+install:
+  - npm i
+node_js:
+  - "7"
+  - "6"

@@ -1,4 +1,6 @@
 # DynamoDB ORM
+[![Travis-ci](https://travis-ci.org/AbdullahZN/DynamoDB.svg?branch=master)](https://travis-ci.org/AbdullahZN/DynamoDB)
+[![Code Climate](https://codeclimate.com/github/AbdullahZN/DynamoDB/badges/gpa.svg)](https://codeclimate.com/github/AbdullahZN/DynamoDB)
 
 ### Requirements
 
@@ -101,7 +103,7 @@ _**Delete**_
 UserModel.delete({ name: "abdu" });
 ```
 
-#### 
+####
 
 #### You can also select a specific item following this example :
 
@@ -170,6 +172,3 @@ Here's full testing process using npm scripts
 > npm run test
 > npm run deleteTable
 ```
-
-
-
