@@ -53,6 +53,3 @@ describe('conditionals', function() {
     });
 
 });
-
-describe('nested conditionals', function() {
-});

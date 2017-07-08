@@ -4,7 +4,7 @@
   "description": "AWS DynamoDB api wrapper",
   "main": "dynamoDB.js",
   "directories": {
-    "test": "tests"
+    "test": "tests/*"
   },
   "dependencies": {
     "aws-sdk": "^2.49.0"
@@ -15,7 +15,7 @@
     "promise-fail": "^1.0.1"
   },
   "scripts": {
-    "test": "mocha tests",
+    "test": "mocha tests/*",
     "createTable": "node testTable create",
     "deleteTable": "node testTable delete"
   },

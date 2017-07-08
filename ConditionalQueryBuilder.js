@@ -23,7 +23,8 @@ module.exports = class ConditionalQueryBuilder extends QueryBuilder {
     }
 
     get(Key) {
-        return this.getItem(this.buildParams({ Key }));
+      const params = this.buildParams({ Key });
+      return this.getItem(params);
     }
 
     update(Key, updateParams) {

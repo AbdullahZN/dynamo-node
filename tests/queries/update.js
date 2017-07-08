@@ -11,6 +11,19 @@ const CONDITION_FAIL = 'The conditional request failed';
 const newError = () => { throw new Error('should not update') };
 const checkConditionalErr = ({ message }) => assert.include(message, CONDITION_FAIL);
 
+describe('Basic requests', function() {
+  it('should update item', function() {
+      return Table.add({ name: 'abdu' }).then(() => {
+        return Table.update({ name: 'abdu' }, { a: 0, b: 0 })
+      }).then((upd) => assert.deepInclude(upd, { a: 0, b: 0 }));
+  });
+
+  it("should remove item's attribute", function() {
+    return Table.removeAttribute({ name: 'abdu' }, [ 'a' ])
+      .then((upd) => assert.notDeepInclude(upd, { a: 0 }));
+  });
+});
+
 describe('conditionals', function() {
 
     describe('#if', function() {
