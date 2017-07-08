@@ -1,5 +1,5 @@
 const AWS = require("aws-sdk");
-const ConditionalQueryBuilder = require('./ConditionalQueryBuilder');
+const ConditionalQueryBuilder = require('./lib/ConditionalQueryBuilder');
 
 const stringify = (object) => JSON.stringify(object, null, 2);
 
