@@ -149,7 +149,7 @@ UserModel.notExists('name').add(newUser);
 UserModel.notExists( ['name', 'age'] ).add(newUser);
 ```
 
-_**Attribute comparison **_
+_**Attribute comparison**_
 
 ```js
 const hector = { name: "hector" };
@@ -171,7 +171,7 @@ UserModel
   .update(hector, { candy: 1 });
 ```
 
-_**Attribute functions **_
+_**Attribute functions**_
 
 ```js
 const momo = { name: "momo" };
@@ -186,7 +186,7 @@ UserModel.where('friends', 'typeIs', 'N').update(momo, { friends: 0 }); // Won't
 
 ## Attribute manipulation
 
-_** Increment/Decrement attribute **_
+_**Increment/Decrement attribute**_
 
 ```js
 const burger = { name: 'burger' };
@@ -200,14 +200,14 @@ FoodModel.increment('ingredients.cheese', 4).update(burger);
 FoodModel.decrement('ingredients.cheese', 1).update(burger);
 ```
 
-_** Remove attribute **_
+_**Remove attribute**_
 ```js
 FoodModel.removeAttribute(burger, [ 'ingredients.cheese' ]);
 FoodModel.removeAttribute(burger, [ 'sold', 'ingredients' ]);
 // burger is now { name: burger, sellers: [5,8] }
 ```
 
-_** Add to/Remove from list attribute **_
+_**Add to/Remove from list attribute**_
 ```js
 FoodModel.addToList({ sellers: [9] }).update(burger) // { ..., sellers: [5,8,9] }
 FoodModel.removeFromList({ sellers: [8, 5] }).update(burger) // { ..., sellers: [9] }
