@@ -1,8 +1,10 @@
 # DynamoDB ORM
-[![Travis-ci](https://travis-ci.org/AbdullahZN/DynamoDB.svg?branch=master)](https://travis-ci.org/AbdullahZN/DynamoDB)
-[![Code Climate](https://codeclimate.com/github/AbdullahZN/DynamoDB/badges/gpa.svg)](https://codeclimate.com/github/AbdullahZN/DynamoDB)
+[![Travis-ci](https://travis-ci.org/AbdullahZN/dynamodb-orm.svg?branch=master)](https://travis-ci.org/AbdullahZN/dynamodb-orm)
+[![Code Climate](https://codeclimate.com/github/AbdullahZN/dynamodb-orm/badges/gpa.svg)](https://codeclimate.com/github/AbdullahZN/dynamodb-orm)
 
-### Requirements
+Please note this repository is a work in progress. Contributions are welcome.
+
+## Requirements
 
 Install package from npm or yarn
 
@@ -10,23 +12,33 @@ Install package from npm or yarn
 > npm install dynamo-node || yarn add dynamo-node
 ```
 
-Require module and pass AWS configuration JSON as parameter
+You can either set your AWS credentials as env variables or as a JSON file
 
 ```js
-const DynamoDB = require('dynamo-node')('./credits.json');
-```
-
-Necessary configuration JSON content
-
-```js
+// AWS credentials as JSON file
 {
   "accessKeyId": "myKey",
   "secretAccessKey": "yourSecret",
-  "region": "eu-central-1"
 }
 ```
+```bash
+# AWS credentials as ENV vars
+AWS_SECRET_ACCESS_KEY="myKey"
+AWS_ACCESS_KEY_ID="yourSecret"
+```
 
-### Usage
+
+Require module
+```js
+const DynamoDB = require('dynamo-node')(region [, credit_path ]);
+// e.g with json credentials
+const DynamoDB = require('dynamo-node')('eu-central-1', './credits.json');
+// e.g with env vars
+const DynamoDB = require('dynamo-node')('eu-central-1');
+```
+
+
+## Usage
 
 ---
 
@@ -44,6 +56,13 @@ const UserModel = DynamoDB.select('users');
 #### Tables
 
 _**Create**_
+
+Attribute types association
+
+S  |  SS | N  | NS  |  B  |  BS | BOOL  |  NULL  | L   |  M
+--|---|---|---|---|---|---|---|---|--
+String  | String Set  | Number  | Number Set  | Binary  | Binary Set  | Boolean  | Null  | List  | Map
+
 
 ```js
 UserModel.createTable({
@@ -95,6 +114,12 @@ UserModel.update({ name: "abdu" }, {
   friends: ["abdu", "chris"],
   points: 450,
 });
+
+// nested properties, assuming clothes is set and is of type Map
+UserModel.update({ name: "abel" }, {
+  'clothes.shirts': 10,
+  'clothes.polos': 3
+});
 ```
 
 _**Delete**_
@@ -103,27 +128,90 @@ _**Delete**_
 UserModel.delete({ name: "abdu" });
 ```
 
-####
+_**Scan**_
 
-#### You can also select a specific item following this example :
-
-_**getItemObject**_
-
+Returns all items from table
 ```js
-const Abdu = UserModel.getItemObject({ name: "abdu" });
+UserModel.scan();
 ```
 
-_**This give you access to the parent Model methods \( except for \#Add \), without worrying about the primary Key**_
+## Conditional Queries
+
+_**Check if attribute exists**_
 
 ```js
-Abdu.get();
-Abdu.update({
-  friends: ["abdu", "chris", "frank"],
-  points: 650,
-});
-Abdu.delete();
+const newUser = { name: "abel", age: 34 };
+
+UserModel.exists('name').add(newUser);
+UserModel.exists( ['name', 'age'] ).add(newUser);
+
+UserModel.notExists('name').add(newUser);
+UserModel.notExists( ['name', 'age'] ).add(newUser);
 ```
 
+_**Attribute comparison **_
+
+```js
+const hector = { name: "hector" };
+
+UserModel.add({ name: "hector", last_connection: 50, age: 10, friends: { nice: 0, bad: 10 } });
+
+// Deletes it
+UserModel
+  .if('last_connection', '>', 30 )
+  .if('last_connection', '<', 100)
+  .if('age', '<>', 90) // different than
+  .delete(hector);
+
+// Updates it
+UserModel
+  .if('last_connection', '=', 50)
+  .if('friends.bad', '>=', 0)
+  .if('age', '<=', 10)
+  .update(hector, { candy: 1 });
+```
+
+_**Attribute functions **_
+
+```js
+const momo = { name: "momo" };
+
+UserModel.where('name', 'beginsWith', 'm').update(momo, { nickname: "momomo" });
+UserModel.where('nickname', 'contains', 'mo').update(momo, { friends: ["lololo"] });
+
+// Please refer to "Attribute types association" section for the list of type attributes
+UserModel.where('friends', 'typeIs', 'N').update(momo, { friends: 0 }); // Won't update
+
+```
+
+## Attribute manipulation
+
+_** Increment/Decrement attribute **_
+
+```js
+const burger = { name: 'burger' };
+
+FoodModel.add({ name: 'burger', sold: 0, sellers: [5,8], ingredients: { cheese: 2 } });
+
+FoodModel.increment('sold', 10).update(burger); // { sold: 10 }
+FoodModel.decrement('sold', 1).update(burger); // { sold: 9 }
+
+FoodModel.increment('ingredients.cheese', 4).update(burger);
+FoodModel.decrement('ingredients.cheese', 1).update(burger);
+```
+
+_** Remove attribute **_
+```js
+FoodModel.removeAttribute(burger, [ 'ingredients.cheese' ]);
+FoodModel.removeAttribute(burger, [ 'sold', 'ingredients' ]);
+// burger is now { name: burger, sellers: [5,8] }
+```
+
+_** Add to/Remove from list attribute **_
+```js
+FoodModel.addToList({ sellers: [9] }).update(burger) // { ..., sellers: [5,8,9] }
+FoodModel.removeFromList({ sellers: [8, 5] }).update(burger) // { ..., sellers: [9] }
+```
 ---
 
 #### Return values
@@ -134,29 +222,21 @@ Following previous examples, here's how you handle return values from each metho
 
 ```js
 // outputs "Abdu"
-Abdu.get()
+UserModel.get({ name: "abdu" })
     .then(item => console.log(item.name));
 
 // outputs "26"
-Abdu.update({ age: "26" })
+UserModel.update({ name: "abdu" }, { age: "26" })
     .then(item => console.log(item.age));
 
 // both outputs "{}"
-Abdu.delete()
+UserModel.delete({ name: "abdu" })
     .then(item => console.log(item));
 
 UserModel.add({ name: "Chris", age: "65" })
     .then(item => console.log(item));
 
-// both outputs "object"
-UserModel.createTable( tableSchema )
-    .then(table => console.log(typeof table));
-
-UserModel.deleteTable()
-    .then(table => console.log(typeof table));
 ```
-
-You can catch errors like you would usually do
 
 ---
 
@@ -170,5 +250,4 @@ Here's full testing process using npm scripts
 ```bash
 > npm run createTable // can take a few seconds to be created even if process exits
 > npm run test
-> npm run deleteTable
 ```

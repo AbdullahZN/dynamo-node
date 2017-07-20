@@ -21,18 +21,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AbdullahZN/DynamoDB.git"
+    "url": "git+https://github.com/AbdullahZN/dynamodb-orm.git"
   },
   "keywords": [
     "dynamodb",
     "dynamo",
     "node",
-    "aws-sdk"
+    "aws-sdk",
+    "mapper",
+    "orm"
   ],
   "author": "Abdullah Uzun",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/AbdullahZN/DynamoDB/issues"
+    "url": "https://github.com/AbdullahZN/dynamodb-orm/issues"
   },
-  "homepage": "https://github.com/AbdullahZN/DynamoDB#readme"
+  "homepage": "https://github.com/AbdullahZN/dynamodb-orm#readme"
 }
