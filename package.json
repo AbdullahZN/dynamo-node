@@ -1,7 +1,7 @@
 {
   "name": "dynamo-node",
   "version": "1.1.2",
-  "description": "AWS DynamoDB api wrapper",
+  "description": "the most handy AWS DynamoDB wrapper yet",
   "main": "dynamoDB.js",
   "directories": {
     "test": "tests/*"
