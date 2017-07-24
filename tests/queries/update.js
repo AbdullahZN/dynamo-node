@@ -1,136 +1,112 @@
-const assert = require('chai').assert;
-const DynamoDB = require('../../index')('eu-central-1');
-const Table = DynamoDB.select('aws.table.for.testing');
+const { assert, Table, TableComb, errors } = require('../test_helpers');
 
-Table.reset = function () {
-    this.resetExpressions();
-    this.resetExpressionValueGenerator();
-}
+const item = { name: 'abdu' };
+const updateParams = { a: 0, b: 0 };
 
-const CONDITION_FAIL = 'The conditional request failed';
-const newError = () => { throw new Error('should not update') };
-const checkConditionalErr = ({ message }) => assert.include(message, CONDITION_FAIL);
+const nestedItem = { name: 'abel'};
+const nestedParams = Object.assign({ prop: { a: 0, b: 0 } }, nestedItem);
 
-describe('Basic requests', function() {
-  it('should update item', function() {
-      return Table.add({ name: 'abdu' }).then(() => {
-        return Table.update({ name: 'abdu' }, { a: 0, b: 0 })
-      }).then((upd) => assert.deepInclude(upd, { a: 0, b: 0 }));
+const array = { name: 'Array' };
+const arrayParams = Object.assign({ list: [ 0, 1, 2, 3 ] }, array);
+
+describe('#update', () => {
+  before('add items to table', () => {
+    return Promise.all([
+      Table.add(item),
+      Table.add(nestedParams),
+      Table.add(arrayParams)
+    ]);
   });
 
-  it("should remove item's attribute", function() {
-    return Table.removeAttribute({ name: 'abdu' }, [ 'a' ])
-      .then((upd) => assert.notDeepInclude(upd, { a: 0 }));
+  describe('unconditional requests', () => {
+    it('should update item', () => {
+      return Table.update(item, { a: 0, b: 0 })
+        .then(upd => assert.deepInclude(upd, { a: 0, b: 0 }));
+    });
+    it("should remove item's attribute", function() {
+      return Table.removeAttribute({ name: 'abdu' }, [ 'a' ])
+        .then(upd => assert.notDeepInclude(upd, { a: 0 }));
+    });
   });
-});
 
-describe('conditionals', function() {
+  describe('conditional requests', () => {
 
-    describe('#if', function() {
-        it('should update if age > 43', function() {
-            return Table.add({ name: 'Fred', age: 45 }).then(() => {
-                return Table.if('age', '>', 43).update({ name: 'Fred'}, { f: 3, s: 'male' })
-                    .then(updated => assert.deepEqual(updated, {f: 3, s: 'male' }));
-            });
-        });
-
-        it('should not update if condition is not valid', function() {
-            return Table.if('age', '<', 40).update({ name: 'Fred'}, { f: 3 })
-                .then(newError).catch(checkConditionalErr);
-        });
-
+    describe('#if', () => {
+      it('succeeds if condition is met', () =>
+        Table.if('b', '<>', 1).update(item, { c: 3, s: 'male' })
+          .then(upd => assert.deepInclude(upd, {c: 3, s: 'male' }))
+      );
+      it('fails otherwise', () =>
+        Table.if('b', '<', 0).update(item, { c: 3 })
+          .then(errors.failure).catch(errors.conditional)
+      );
     });
 
-    Table.add({ name: 'abelinho', field: 's' });
-    describe('#where(,beginsWith,)', function() {
-
-        it("should update item if name beginsWith 'abel'", function() {
-            return Table.where('name', 'beginsWith', 'abel').update({ name: 'abelinho' }, { a: 0 });
-        });
-
-        it("should not update item if name doesn't beginsWith 'abel'", function() {
-            return Table.where('name', 'beginsWith', 'marcelo').update({ name: 'abelinho' }, { a: 1 })
-                .catch(checkConditionalErr).then((data) => assert.typeOf(data, 'undefined'));
-        });
-
+    describe('#where(,beginsWith,)', () => {
+      it('succeeds when condition is met', () =>
+        Table.where('name', 'beginsWith', 'ab').update(item, { a: 0 })
+      );
+      it('fails otherwise', () =>
+        Table.where('name', 'beginsWith', 'marcelo').update(item, { a: 1 })
+          .then((data) => assert.typeOf(data, 'undefined')).catch(errors.conditional)
+      );
     });
 
-    describe('#where(,contains,)', function() {
-
-        it("should update item if name contains 'abel'", function() {
-            return Table.where('name', 'contains', 'abel').update({ name: 'abelinho' }, { b: 0 });
-        });
-
-        it("should not update item if name doesn't contain 'abel'", function() {
-            return Table.where('name', 'contains', 'marcelo').update({ name: 'abelinho' }, { b: 1 })
-                .catch(checkConditionalErr).then((data) => assert.typeOf(data, 'undefined'));
-        });
-
+    describe('#where(,contains,)', () => {
+      it("succeeds when condition is met", () =>
+        Table.where('name', 'contains', 'abd').update(item, { b: 0 })
+      );
+      it("should not update item if name doesn't contain 'abel'", () =>
+        Table.where('name', 'contains', 'marcelo').update(item, { b: 1 })
+          .catch(errors.conditional).then((data) => assert.typeOf(data, 'undefined'))
+      );
     });
 
-    describe('#where(,typeIs,)', function() {
-        // We don't need to test primary key for type as it is already handled by DynamoDB
-        it('should update item if typeof param is String', function() {
-            return Table.where('field', 'typeIs', 'S').update({ name: 'abelinho'}, { c: 0 });
-        });
-        it('should not update item if typeof param is Number', function() {
-            return Table.where('field', 'typeIs', 'N').update({ name: 'abelinho'}, { c: 1 })
-                .catch(checkConditionalErr).then((data) => assert.typeOf(data, 'undefined'));
-        });
+    describe('#where(,typeIs,)', () => {
+      // We don't need to test primary key for type as it is already handled by DynamoDB
+      it('succeeds when condition is met', () =>
+        Table.where('a', 'typeIs', 'N').update(item, { c: 0 })
+      );
+      it('fails otherwise', () =>
+        Table.where('b', 'typeIs', 'S').update(item, { c: 1 })
+          .catch(errors.conditional).then((data) => assert.typeOf(data, 'undefined'))
+      );
     });
+  });
 
+  describe('nested conditionals', () => {
+    it('should update nested object if condition is true', () =>
+      Table.if('prop.a', '=', 0).update(nestedItem, { children: 4 })
+        .then(upd => assert.equal(upd.children, 4))
+    );
+  });
 
-});
+  describe('List append and remove', () => {
+    it('should add to existing list', () =>
+      Table.addToList({ list: [5] }).update(array).then(upd => assert.equal(upd.list[4], 5))
+    );
+    it('should remove from list', () =>
+      // should remove first & second item
+      Table.removeFromList({ list: [0, 1] }).update(array).then(upd => {
+        assert.notInclude(upd.list, [0, 1]);
+        assert.equal(upd.list[0], 2);
+      })
+    );
+  });
 
-describe('nested conditionals', function() {
-    Table.add({ name: 'Eric', prono: { a: 0, b: 0 } });
-    it('should update nested object if condition is true', function() {
-        return Table.if('prono.a', '=', 0).update({ name: 'Eric'}, { children: 4 })
-            .then(updated => assert.equal(updated.children, 4));
-    });
-});
-
-describe('List append and remove', function() {
-    const array = { name: 'Array' };
-    Table.add({ name: 'Array', list: [ 0, 1, 2, 3 ] });
-
-    it('should add to existing list', function() {
-        return Table.addToList({ list: [5] }).update(array)
-            .then((updated) => assert.equal(updated.list[4], 5));
-    });
-
-    it('should remove from list', function() {
-        // should remove first & second item
-        return Table.removeFromList({ list: [0, 1] }).update(array)
-            .then((updated) => {
-                assert.notInclude(updated.list, [0, 1]);
-                assert.equal(updated.list[0], 2);
-            });
-    });
-});
-
-describe('Incrementing and Decrementing', function() {
-    const sandwich = { name: 'sandwich' };
-    Table.add({ name: 'sandwich', buyers: 5, ingredients: { flour: 0, cheese: 150 } });
-
-    it('should increment param from 5 to 6', function() {
-        return Table.increment('buyers', 1).update(sandwich)
-            .then(updated => assert.equal(updated.buyers, 6));
-    });
-
-    it('should increment nested param from 0 to 1', function() {
-        return Table.increment('ingredients.flour', 1).update(sandwich)
-            .then(updated => assert.equal(updated.ingredients.flour, 1));
-    });
-
-    it('should decrement param from 6 to 1', function() {
-        return Table.decrement('buyers', 5).update(sandwich)
-            .then(updated => assert.equal(updated.buyers, 1));
-    });
-
-    it('should decrement nested param from 150 to 147', function() {
-        return Table.decrement('ingredients.cheese', 3).update(sandwich)
-            .then(updated => assert.equal(updated.ingredients.cheese, 147));
-    });
+  describe('Incrementing and Decrementing', () => {
+    it('should increment prop', () =>
+      Table.increment('a', 1).update(item).then(upd => assert.equal(upd.a, 1))
+    );
+    it('should increment nested prop', () =>
+      Table.increment('prop.a', 1).update(nestedItem).then(upd => assert.equal(upd.prop.a, 1))
+    );
+    it('should decrement prop', () =>
+      Table.decrement('a', 1).update(item).then(upd => assert.equal(upd.a, 0))
+    );
+    it('should decrement nested prop', () =>
+      Table.decrement('prop.a', 1).update(nestedItem).then(upd => assert.equal(upd.prop.a, 0))
+    );
+  });
 
 });

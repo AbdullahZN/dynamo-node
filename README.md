@@ -242,8 +242,8 @@ UserModel.add({ name: "Chris", age: "65" })
 
 #### Tests
 
-Tests are located in the **./tests** folder  
-Note that you have to create a Table named "**aws.table.for.testing**" in order for them to run correctly.
+Tests are located in the **./tests** folder
+Note that you have to create two Tables named "**aws.table.for.testing**" and "**aws.table.combined.for.testing**" in order for them to run correctly.
 
 Here's full testing process using npm scripts
 

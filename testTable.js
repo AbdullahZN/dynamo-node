@@ -1,18 +1,38 @@
-const DynamoDB = require('./dynamoDB');
+const DynamoDB = require('./index')('eu-central-1');
 const arg = process.argv[2];
+
+const baseParams = {
+  ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+}
 
 const params = {
   KeySchema: [{ AttributeName: "name", KeyType: "HASH" }],
   AttributeDefinitions: [{ AttributeName: "name", AttributeType: "S" }],
-  ProvisionedThroughput: { ReadCapacityUnits: 10, WriteCapacityUnits: 10 }
 };
+
+const combinedParams = {
+  KeySchema: [
+    { AttributeName: "name", KeyType: "HASH" },
+    { AttributeName: "tribe", KeyType: "RANGE" },
+  ],
+  AttributeDefinitions: [
+    { AttributeName: "name", AttributeType: "S" },
+    { AttributeName: "tribe", AttributeType: "S" }
+  ],
+}
 
 switch(arg) {
   case 'create':
     DynamoDB
       .select("aws.table.for.testing")
-      .createTable(params)
-      .then((data) => console.log("Created Test Table"))
+      .createTable(Object.assign(params, baseParams))
+      .then((data) => console.log("Created Test Table with primary key"))
+      .catch(err => console.log(err.message.split('\n')[1]));
+
+    DynamoDB
+      .select("aws.table.combined.for.testing")
+      .createTable(Object.assign(combinedParams, baseParams))
+      .then((data) => console.log("Created Test Table with primary and range key"))
       .catch(err => console.log(err.message.split('\n')[1]));
     break;
   case 'delete':

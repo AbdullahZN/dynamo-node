@@ -1,55 +1,37 @@
-const assert = require('chai').assert;
-const DynamoDB = require('../../index')('eu-central-1');
-const Table = DynamoDB.select('aws.table.for.testing');
+const { assert, Table, TableComb, errors } = require('../test_helpers');
 
-Table.reset = function () {
-    this.resetExpressions();
-    this.resetExpressionValueGenerator();
-}
+const item = { name: 'newItem' };
 
-const CONDITION_FAIL = 'The conditional request failed';
-const newItem = { name: 'newItem' };
-const newError = () => { throw new Error('should not add') };
-const checkConditionalErr = ({ message }) => assert.include(message, CONDITION_FAIL);
-
-describe('Basic requests', function() {
-
-    it('should add item if only primary key is provided', function() {
-        return Table.add(newItem);
+describe('#add', () => {
+    describe('unconditional requests', () => {
+        it('succeeds if partition key is valid', () => Table.add(item));
+        it('fails otherwise', () =>
+            Table.add({ a: 0 }).then(errors.failure).catch(errors.validation)
+        );
+        it('should add item with more properties', () =>
+            Table.add(Object.assign(item, { level: 5 }))
+        );
     });
 
-    it('should add item with more properties', function() {
-        return Table.add(Object.assign(newItem, { level: 5 }));
-    });
-
-    it('should not add item if primary key is not provided', function() {
-        return Table.add({ noprops: 0 }).then(newError)
-            .catch(({ message }) => assert.include(message, 'Missing the key'));
-    });
-
-});
-
-describe('conditionals', function() {
-    describe('#exists', function() {
-        it('should add only if already exists', function() {
-            return Table.exists('name').add(newItem);
+    describe('conditional requests', () => {
+        describe('#exists', () => {
+            it('succeeds if exists', () => Table.exists('name').add(item));
+            it('fails otherwise', () =>
+                Table.exists('name').add({ name: "idontexist" })
+                    .then(errors.failure).catch(errors.conditional)
+            );
         });
 
-        it('should fail if trying to override non existing item', function() {
-            return Table.exists('name').add({ name: "thisNameDoesNotExists" })
-                .then(newError).catch(checkConditionalErr);
+        describe('#notExists', () => {
+            it('succeeds if notExists', () => Table.notExists('name').add({ name: 'item.item' }));
+            it('fails otherwise', () =>
+                Table.notExists('name').add(item).then(errors.failure).catch(errors.conditional)
+            );
         });
+
     });
 
-    describe('#notExists', function() {
-        it('should add only if not exists', function() {
-            return Table.notExists('name').add({ name: 'newItem2' })
-                .then(() => Table.delete({ name: 'newItem2' }));
-        });
-
-        it('should fail if trying to add existing item', function() {
-            return Table.notExists('name').add(newItem).then(newError).catch(checkConditionalErr);
-        });
-    });
-
+    after('delete items', () => {
+        Table.delete({ name: 'item.item' });
+    })
 });
