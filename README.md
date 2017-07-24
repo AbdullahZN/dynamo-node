@@ -1,6 +1,16 @@
 # DynamoDB ORM
-[![Travis-ci](https://travis-ci.org/AbdullahZN/dynamodb-orm.svg?branch=master)](https://travis-ci.org/AbdullahZN/dynamodb-orm)
-[![Code Climate](https://codeclimate.com/github/AbdullahZN/dynamodb-orm/badges/gpa.svg)](https://codeclimate.com/github/AbdullahZN/dynamodb-orm)
+[![Travis-ci](https://travis-ci.org/AbdullahZN/dynamo-node.svg?branch=master)](https://travis-ci.org/AbdullahZN/dynamo-node)
+[![Code Climate](https://codeclimate.com/github/AbdullahZN/dynamo-node/badges/gpa.svg)](https://codeclimate.com/github/AbdullahZN/dynamo-node)
+
+This DynamoDB ORM for node.js aims to provide a beautiful, simple and complete implementation to work with dynamodb databases. You can easily select a table and start querying/writing data, from simple requests to conditional ones without prior knowledge.
+
+Current features:
+ - **Expression Abstraction :** Condition, Attribute values/names
+ - **Conditional Requests :** Add, update, delete conditionally
+ - **Attribute Functions :** begins_with, contains, typeIs
+ - **Incrementing Decrementing**
+ - **List, Set Append/Remove**
+ - **Attribute Removal**
 
 Please note this repository is a work in progress. Contributions are welcome.
 
@@ -242,12 +252,12 @@ UserModel.add({ name: "Chris", age: "65" })
 
 #### Tests
 
-Tests are located in the **./tests** folder  
-Note that you have to create a Table named "**aws.table.for.testing**" in order for them to run correctly.
+Tests are located in the **./tests** folder
+Note that you have to create two Tables named "**aws.table.for.testing**" and "**aws.table.combined.for.testing**" in order for them to run correctly.
 
 Here's full testing process using npm scripts
 
 ```bash
-> npm run createTable // can take a few seconds to be created even if process exits
+> npm run createTable // can take a few seconds to be created even after process exits
 > npm run test
 ```

@@ -1,19 +1,26 @@
-const assert = require('chai').assert;
-const expect = require('chai').expect;
-const DynamoDB = require('../../index')('eu-central-1');
-const Table = DynamoDB.select('aws.table.for.testing');
+const { assert, Table, TableComb, errors } = require('../test_helpers');
 
-Table.reset = function () {
-    this.resetExpressions();
-    this.resetExpressionValueGenerator();
-}
+// Item Keys
+const key = { name: 'a' };
+const keys = { name: 'a', tribe: 'yt' };
 
-const CONDITION_FAIL = 'The conditional request failed';
-const newError = () => { throw new Error('should not get') };
-const checkConditionalErr = ({ message }) => assert.include(message, CONDITION_FAIL);
-
-describe('Basic request', function() {
-    it('should return item', function() {
-        return Table.add({ name: 'a' }).then(() => Table.get({ name: 'a' }));
+describe('#get', function() {
+    before('Adding items to table beforehand', function() {
+        return Promise.all([
+            Table.add(key),
+            TableComb.add(keys)
+        ]);
     });
-})
+    describe('with partition key only', () => {
+        it('succeeds with right partition key', () => Table.get(key));
+        it('fails with wrong partition key', () =>
+            Table.get({a: 0}).then(errors.failure).catch(errors.validation)
+        );
+    });
+    describe('with partition and range key', () => {
+        it('succeeds with right key combination', () => TableComb.get(keys));
+        it('fails with wrong combination', () =>
+            TableComb.get({a:0, g:9}).then(errors.failure).catch(errors.validation)
+        );
+    });
+});

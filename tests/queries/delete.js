@@ -1,49 +1,38 @@
-const assert = require('chai').assert;
-const expect = require('chai').expect;
-const DynamoDB = require('../../index')('eu-central-1');
-const Table = DynamoDB.select('aws.table.for.testing');
+const { assert, Table, TableComb, errors } = require('../test_helpers');
 
-Table.reset = function () {
-    this.resetExpressions();
-    this.resetExpressionValueGenerator();
-}
+// Item keys
+const key = { name: 'J' };
+const keys = { name: 'K', tribe: 'jacksons' };
 
-const CONDITION_FAIL = 'The conditional request failed';
-const newError = () => { throw new Error('should not delete') };
-const checkConditionalErr = ({ message }) => assert.include(message, CONDITION_FAIL);
+// Items
+const item = Object.assign({ age: 9, nested: { object: 0 } }, key);
+const itemComb = Object.assign({ age: 9, nested: { object: 0 } }, keys);
 
-describe('Basic request', function() {
-  it('should delete provided key', function() {
-    return Table.add({ name: 'J'}).then(() => Table.delete({ name: 'J' }));
-  });
-})
+describe('#delete', () => {
 
-describe('Conditional requests', function() {
+    beforeEach('Adding items to table beforehand', () =>
+        Promise.all([ Table.add(item) ])
+    );
 
-  describe('#if', function() {
-    it('should delete if condition is valid', function() {
-      return Table.add({ name: 'K', a: 0 })
-      .then(() => Table.if('a', '>=', 0).delete({ name: 'K'}));
+    describe('unconditional request', () => {
+      it('succeeds with valid key', () => Table.delete(key));
+      it('fails with unvalid key', () =>
+        Table.delete({ a: 0 }).then(errors.failure).catch(errors.validation)
+      );
     });
-  })
 
-  describe('#where', function() {
-    it('should not delete if condition is not valid', function() {
-      return Table.add({ name: 'L', b: 'rest' })
-      .then(() => Table.where('b', 'beginsWith', 'r').delete({ name: 'L' }));
+    describe('conditional requests', () => {
+      it('succeeds if condition is met', () => Table.if('age', '>', 6).delete(key));
+      it('fails otherwise',       () =>
+        Table.if('age', '<>', 9).delete(key).then(errors.failure).catch(errors.conditional)
+      );
     });
-  });
 
-});
+    describe('nested conditional requests', () => {
+      it('succeeds if condition is met', () => Table.if('nested.object', '=', 0).delete(key));
+      it('fails otherwise', () =>
+        Table.if('nested.object', '>', 0).delete(key).then(errors.failure).catch(errors.conditional)
+      );
+    });
 
-describe('nested conditionals', function() {
-    it('should delete if nested property condition is true', function() {
-      return Table.add({ name: 'Erikssen', prono: { a: 0, b: 0 } })
-        .then(() => Table.if('prono.a', '=', 0).delete({ name: 'Erikssen' }));
-    });
-    it('should not delete if nested property condition is false', function() {
-      return Table.add({ name: 'Erikssen', prono: { a: 0, b: 0 } })
-        .then(() => Table.if('prono.a', '<>', 0).delete({ name: 'Erikssen' }))
-        .then(newError).catch(checkConditionalErr);
-    });
 });
