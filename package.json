@@ -21,7 +21,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AbdullahZN/dynamodb-orm.git"
+    "url": "git+https://github.com/AbdullahZN/dynamo-node.git"
   },
   "keywords": [
     "dynamodb",
@@ -34,7 +34,7 @@
   "author": "Abdullah Uzun",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/AbdullahZN/dynamodb-orm/issues"
+    "url": "https://github.com/AbdullahZN/dynamo-node/issues"
   },
-  "homepage": "https://github.com/AbdullahZN/dynamodb-orm#readme"
+  "homepage": "https://github.com/AbdullahZN/dynamo-node#readme"
 }
