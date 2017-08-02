@@ -11,16 +11,23 @@ describe('#get', function() {
             TableComb.add(keys)
         ]);
     });
+
     describe('with partition key only', () => {
         it('succeeds with right partition key', () => Table.get(key));
         it('fails with wrong partition key', () =>
             Table.get({a: 0}).then(errors.failure).catch(errors.validation)
         );
     });
+
     describe('with partition and range key', () => {
         it('succeeds with right key combination', () => TableComb.get(keys));
         it('fails with wrong combination', () =>
             TableComb.get({a:0, g:9}).then(errors.failure).catch(errors.validation)
         );
+    });
+
+    after(() => {
+        Table.delete(key);
+        TableComb.delete(keys);
     });
 });
