@@ -138,11 +138,9 @@ _**Query**_
 
 ```js
 UserTable.query('name', '=', 'abdu');
+
 // Using global secondary index
 UserTable.useIndex('age-index').query('age', '=', 5);
-```
-
-```
 ```
 
 _**Scan**_
