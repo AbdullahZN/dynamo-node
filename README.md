@@ -52,18 +52,14 @@ const DynamoDB = require('dynamo-node')('eu-central-1');
 
 ---
 
-#### Models
+#### Tables
 
-Init your model, this works even if 'users' table is not created yet
-
-We'll use the same model in further examples
+Inits your table, or sets tablename for further creation
 
 ```js
 // "users" refers to the TableName we want to query from
-const UserModel = DynamoDB.select('users');
+const UserTable = DynamoDB.select('users');
 ```
-
-#### Tables
 
 _**Create**_
 
@@ -75,7 +71,7 @@ String  | String Set  | Number  | Number Set  | Binary  | Binary Set  | Boolean 
 
 
 ```js
-UserModel.createTable({
+UserTable.createTable({
     KeySchema: [       
         { AttributeName: "name", KeyType: "HASH"},  //Partition key
         { AttributeName: "uid", KeyType: "RANGE" }  //Sort key
@@ -94,7 +90,7 @@ UserModel.createTable({
 _**Delete**_
 
 ```js
-UserModel.deleteTable();
+UserTable.deleteTable();
 ```
 
 ---
@@ -104,7 +100,7 @@ UserModel.deleteTable();
 _**Add**_
 
 ```js
-UserModel.add({
+UserTable.add({
   name: "abdu", // Primary Key
   participants: ["A", "B", "C", "D"],
   last: "D"
@@ -114,19 +110,19 @@ UserModel.add({
 _**Get**_
 
 ```js
-UserModel.get({ name: "abdu" });
+UserTable.get({ name: "abdu" });
 ```
 
 _**Update**_
 
 ```js
-UserModel.update({ name: "abdu" }, {
+UserTable.update({ name: "abdu" }, {
   friends: ["abdu", "chris"],
   points: 450,
 });
 
 // nested properties, assuming clothes is set and is of type Map
-UserModel.update({ name: "abel" }, {
+UserTable.update({ name: "abel" }, {
   'clothes.shirts': 10,
   'clothes.polos': 3
 });
@@ -135,14 +131,23 @@ UserModel.update({ name: "abel" }, {
 _**Delete**_
 
 ```js
-UserModel.delete({ name: "abdu" });
+UserTable.delete({ name: "abdu" });
+```
+
+_**Query**_
+
+```js
+UserTable.query('name', '=', 'abdu');
+
+// Using global secondary index
+UserTable.useIndex('age-index').query('age', '=', 5);
 ```
 
 _**Scan**_
 
 Returns all items from table
 ```js
-UserModel.scan();
+UserTable.scan();
 ```
 
 ## Conditional Queries
@@ -152,11 +157,11 @@ _**Check if attribute exists**_
 ```js
 const newUser = { name: "abel", age: 34 };
 
-UserModel.exists('name').add(newUser);
-UserModel.exists( ['name', 'age'] ).add(newUser);
+UserTable.exists('name').add(newUser);
+UserTable.exists( ['name', 'age'] ).add(newUser);
 
-UserModel.notExists('name').add(newUser);
-UserModel.notExists( ['name', 'age'] ).add(newUser);
+UserTable.notExists('name').add(newUser);
+UserTable.notExists( ['name', 'age'] ).add(newUser);
 ```
 
 _**Attribute comparison**_
@@ -164,17 +169,17 @@ _**Attribute comparison**_
 ```js
 const hector = { name: "hector" };
 
-UserModel.add({ name: "hector", last_connection: 50, age: 10, friends: { nice: 0, bad: 10 } });
+UserTable.add({ name: "hector", last_connection: 50, age: 10, friends: { nice: 0, bad: 10 } });
 
 // Deletes it
-UserModel
+UserTable
   .if('last_connection', '>', 30 )
   .if('last_connection', '<', 100)
   .if('age', '<>', 90) // different than
   .delete(hector);
 
 // Updates it
-UserModel
+UserTable
   .if('last_connection', '=', 50)
   .if('friends.bad', '>=', 0)
   .if('age', '<=', 10)
@@ -186,11 +191,11 @@ _**Attribute functions**_
 ```js
 const momo = { name: "momo" };
 
-UserModel.where('name', 'beginsWith', 'm').update(momo, { nickname: "momomo" });
-UserModel.where('nickname', 'contains', 'mo').update(momo, { friends: ["lololo"] });
+UserTable.where('name', 'beginsWith', 'm').update(momo, { nickname: "momomo" });
+UserTable.where('nickname', 'contains', 'mo').update(momo, { friends: ["lololo"] });
 
 // Please refer to "Attribute types association" section for the list of type attributes
-UserModel.where('friends', 'typeIs', 'N').update(momo, { friends: 0 }); // Won't update
+UserTable.where('friends', 'typeIs', 'N').update(momo, { friends: 0 }); // Won't update
 
 ```
 
@@ -201,26 +206,26 @@ _**Increment/Decrement attribute**_
 ```js
 const burger = { name: 'burger' };
 
-FoodModel.add({ name: 'burger', sold: 0, sellers: [5,8], ingredients: { cheese: 2 } });
+FoodTable.add({ name: 'burger', sold: 0, sellers: [5,8], ingredients: { cheese: 2 } });
 
-FoodModel.increment('sold', 10).update(burger); // { sold: 10 }
-FoodModel.decrement('sold', 1).update(burger); // { sold: 9 }
+FoodTable.increment('sold', 10).update(burger); // { sold: 10 }
+FoodTable.decrement('sold', 1).update(burger); // { sold: 9 }
 
-FoodModel.increment('ingredients.cheese', 4).update(burger);
-FoodModel.decrement('ingredients.cheese', 1).update(burger);
+FoodTable.increment('ingredients.cheese', 4).update(burger);
+FoodTable.decrement('ingredients.cheese', 1).update(burger);
 ```
 
 _**Remove attribute**_
 ```js
-FoodModel.removeAttribute(burger, [ 'ingredients.cheese' ]);
-FoodModel.removeAttribute(burger, [ 'sold', 'ingredients' ]);
+FoodTable.removeAttribute(burger, [ 'ingredients.cheese' ]);
+FoodTable.removeAttribute(burger, [ 'sold', 'ingredients' ]);
 // burger is now { name: burger, sellers: [5,8] }
 ```
 
 _**Add to/Remove from list attribute**_
 ```js
-FoodModel.addToList({ sellers: [9] }).update(burger) // { ..., sellers: [5,8,9] }
-FoodModel.removeFromList({ sellers: [8, 5] }).update(burger) // { ..., sellers: [9] }
+FoodTable.addToList({ sellers: [9] }).update(burger) // { ..., sellers: [5,8,9] }
+FoodTable.removeFromList({ sellers: [8, 5] }).update(burger) // { ..., sellers: [9] }
 ```
 ---
 
@@ -232,18 +237,18 @@ Following previous examples, here's how you handle return values from each metho
 
 ```js
 // outputs "Abdu"
-UserModel.get({ name: "abdu" })
+UserTable.get({ name: "abdu" })
     .then(item => console.log(item.name));
 
 // outputs "26"
-UserModel.update({ name: "abdu" }, { age: "26" })
+UserTable.update({ name: "abdu" }, { age: "26" })
     .then(item => console.log(item.age));
 
 // both outputs "{}"
-UserModel.delete({ name: "abdu" })
+UserTable.delete({ name: "abdu" })
     .then(item => console.log(item));
 
-UserModel.add({ name: "Chris", age: "65" })
+UserTable.add({ name: "Chris", age: "65" })
     .then(item => console.log(item));
 
 ```
