@@ -25,9 +25,6 @@ const params = {
         ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
     },
   ],
-=======
-  AttributeDefinitions: [{ AttributeName: "name", AttributeType: "S" }],
->>>>>>> dca0840b5e9cf735c24e53f1dbfafe545d53b70a
 };
 
 const combinedParams = {
@@ -46,24 +43,14 @@ switch(arg) {
     DynamoDB
       .select("aws.table.for.testing")
       .createTable(Object.assign(params, baseParams))
-<<<<<<< HEAD
       .then(() => console.log("Created Test Table with primary key"))
       .catch(err => console.log(err.message.split('\n')[0]));
-=======
-      .then((data) => console.log("Created Test Table with primary key"))
-      .catch(err => console.log(err.message.split('\n')[1]));
->>>>>>> dca0840b5e9cf735c24e53f1dbfafe545d53b70a
 
     DynamoDB
       .select("aws.table.combined.for.testing")
       .createTable(Object.assign(combinedParams, baseParams))
-<<<<<<< HEAD
       .then(() => console.log("Created Test Table with primary and range key"))
       .catch(err => console.log(err.message.split('\n')[0]));
-=======
-      .then((data) => console.log("Created Test Table with primary and range key"))
-      .catch(err => console.log(err.message.split('\n')[1]));
->>>>>>> dca0840b5e9cf735c24e53f1dbfafe545d53b70a
     break;
   case 'delete':
     DynamoDB
