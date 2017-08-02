@@ -7,7 +7,6 @@ const baseParams = {
 
 const params = {
   KeySchema: [{ AttributeName: "name", KeyType: "HASH" }],
-<<<<<<< HEAD
   AttributeDefinitions: [
     { AttributeName: "name", AttributeType: "S" },
     { AttributeName: "age", AttributeType: "N" }
