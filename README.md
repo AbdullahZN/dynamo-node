@@ -116,6 +116,7 @@ UserTable.get({ name: "abdu" });
 _**Update**_
 
 ```js
+// if "abdu" doesn't exist, it will be added (upsert)
 UserTable.update({ name: "abdu" }, {
   friends: ["abdu", "chris"],
   points: 450,
