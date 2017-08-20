@@ -1,4 +1,4 @@
-const assert = require('chai').assert;
+const { assert, expect, should } = require('chai');
 const DynamoDB = require('../index')('eu-central-1');
 
 // Test Tables
@@ -13,13 +13,19 @@ const errorCodes = {
 
 // error callbacks
 const errors = {
-  failure: () => { throw new Error('assert failed') },
-  conditional: ({ code }) => assert.include(code, errorCodes.CONDITION),
+  failure: (d) => {
+    throw new Error('assert failed')
+  },
+  conditional: ({ code }) => {
+    assert.include(code, errorCodes.CONDITION);
+  },
   validation: ({ code }) => assert.equal(code, errorCodes.VALIDATION)
 };
 
 module.exports = {
   assert,
+  expect,
+  should,
   Table,
   TableComb,
   errors
