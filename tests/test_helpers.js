@@ -28,5 +28,6 @@ module.exports = {
   should,
   Table,
   TableComb,
+  DynamoDB,
   errors
 }

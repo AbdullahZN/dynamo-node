@@ -5,9 +5,7 @@ const key = { name: 'a' };
 const keys = { name: 'a', tribe: 'yt' };
 
 describe('#query', () => {
-  before(() => {
-    return Table.add({ name: 'a', age: 5, p:1 });
-  });
+  before(() => Table.add({ name: 'a', age: 5 }));
 
   it('succeeds with simple query', () => {
     return Table.query('name', '=', 'a');
@@ -36,4 +34,5 @@ describe('#query', () => {
     return Table.useIndex('age-').query('name', '=', 'a')
       .then(errors.failure).catch(errors.validation);
   });
+
 });

@@ -116,6 +116,7 @@ UserTable.get({ name: "abdu" });
 _**Update**_
 
 ```js
+// if "abdu" doesn't exist, it will be added (upsert)
 UserTable.update({ name: "abdu" }, {
   friends: ["abdu", "chris"],
   points: 450,
@@ -228,6 +229,45 @@ FoodTable.addToList({ sellers: [9] }).update(burger) // { ..., sellers: [5,8,9] 
 FoodTable.removeFromList({ sellers: [8, 5] }).update(burger) // { ..., sellers: [9] }
 ```
 ---
+
+## Batch Operations
+
+```js
+// No need to provide a table name this time
+const Batch = DynamoDB.select();
+```
+
+```js
+const batchGet = {
+    'table1': {
+        // 'name' is the primary key of table1
+        Keys: { 'name': ['myItem', 'myItem2', 'myItem3', 'myItem4'] }
+    },
+    'table2': {
+        // 'pid' is the primary key of table2
+        Keys: { 'pid': [1101, 1110, 1010] }
+    }
+};
+Batch.batchGet(batchGet);
+```
+
+```js
+const batchPut = {
+    'table1': [ { name: 'a'}, { name: 'b' }, { name: 'c' }, { name: 'd' } ],
+    'table2': [ { pid: 1 }, { pid: 2 }, { pid: 3 }, { pid: 4 } ],
+};
+
+Batch.batchPut(batchPut);
+```
+
+```js
+const batchDelete = {
+    'table1': [ { name: 'b' }, { name: 'c' } ],
+    'table2': [ { pid: 3 }, { pid: 4 } ],
+};
+
+Batch.batchDelte(batchDelete);
+```
 
 #### Return values
 

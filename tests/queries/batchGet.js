@@ -1,4 +1,4 @@
-const { assert, Table, TableComb, errors } = require('../test_helpers');
+const { assert, Table, errors } = require('../test_helpers');
 
 const item  = { name: 'myItem'  };
 const item2 = { name: 'myItem2' };
@@ -21,13 +21,11 @@ describe('#batchGet', () => {
             }
         };
         const expected = [ item, item2, item3, item4 ];
-        
+
         it('should get multiple items from DB', () => {
             return Table.batchGet(batchGet).then(data => {
                 assert.includeDeepMembers(expected, data['aws.table.for.testing']);
             });
         });
     });
-
-
 });
