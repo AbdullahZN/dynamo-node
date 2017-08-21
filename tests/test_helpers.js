@@ -1,5 +1,8 @@
+process.env.NODE_ENV = 'test';
+
 const { assert, expect, should } = require('chai');
 const DynamoDB = require('../index')('eu-central-1');
+
 
 // Test Tables
 const Table = DynamoDB.select('aws.table.for.testing');
