@@ -7,6 +7,7 @@ before_install:
   - tar -xvf *.tar.gz
   - java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb &
   - cd ..
+  - node testTable create
   - npm i -g mocha chai
 language: node_js
 install:
