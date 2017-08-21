@@ -11,6 +11,7 @@ before_install:
 language: node_js
 install:
   - npm i
+  - node testTable create
 node_js:
   - "7"
   - "6"

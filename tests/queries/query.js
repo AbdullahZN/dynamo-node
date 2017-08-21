@@ -34,13 +34,4 @@ describe('#query', () => {
     return Table.useIndex('age-').query('name', '=', 'a')
       .then(errors.failure).catch(errors.validation);
   });
-
-  it('queries with secondary index and non keyConditions', () => {
-    return Table.useIndex('age-index').if('name', '=', 'a').query('age', '=', 5);
-  });
-
-  it('queries with secondary index and non keyConditions', () => {
-    return Table.useIndex('age-index').if('name', '=', 'momo').query('age', '=', 5);
-  });
-
 });
