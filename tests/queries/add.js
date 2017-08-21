@@ -1,8 +1,13 @@
 const { assert, Table, TableComb, errors } = require('../test_helpers');
 
 const item = { name: 'newItem' };
-
+const item2 = { name: 'item.item' };
 describe('#add', () => {
+    before('deletes items if already exists', () => {
+        Table.delete(item);
+        Table.delete(item2);
+    });
+
     describe('unconditional requests', () => {
       it('succeeds if partition key is valid', () => Table.add(item));
       it('fails otherwise', () =>
@@ -30,8 +35,4 @@ describe('#add', () => {
         });
 
     });
-
-    after('delete items', () => {
-        Table.delete({ name: 'item.item' });
-    })
 });
