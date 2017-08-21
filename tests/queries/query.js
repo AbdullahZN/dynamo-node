@@ -34,5 +34,4 @@ describe('#query', () => {
     return Table.useIndex('age-').query('name', '=', 'a')
       .then(errors.failure).catch(errors.validation);
   });
-
 });

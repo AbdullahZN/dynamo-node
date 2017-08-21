@@ -1,5 +1,8 @@
+process.env.NODE_ENV = 'test';
+  
 const DynamoDB = require('./index')('eu-central-1');
 const arg = process.argv[2];
+
 
 const baseParams = {
   ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
