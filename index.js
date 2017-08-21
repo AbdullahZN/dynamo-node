@@ -29,9 +29,10 @@ module.exports      = (region, configPath) => {
     // Immediately init DynamoDB from config file
     configPath && AWS.config.loadFromPath(configPath);
     AWS.config.update(config);
+    AWS.config.update({ region });
 
     // gets docClient function to return promise
-    const db = getPromise(new AWS.DynamoDB());
+    const db = getPromise(new AWS.DynamoDB({ apiVersion: '2012-08-10' }));
     const doc = getPromise(new AWS.DynamoDB.DocumentClient());
 
     return {
