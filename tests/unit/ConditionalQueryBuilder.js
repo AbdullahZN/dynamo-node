@@ -1,21 +1,23 @@
-const { expect, Table, TableComb, errors } = require('../test_helpers');
+const { expect, DynamoDB } = require('../test_helpers');
+const { checkConditionExpression } = require('./unit_helpers');
+
 const ConditionalQueryBuilder = require('../../lib/ConditionalQueryBuilder');
-const expressionBuilder = require('../../lib/ExpressionBuilder');
 
 const tablename = 'table-name';
 const docFn = function doc(){};
 const dbFn = function db(){};
 const cqb = new ConditionalQueryBuilder(tablename, docFn, dbFn);
 
+// sets params argument to cqb.params for further conditionExpression checks
+cqb.conditionCheck = checkConditionExpression;
+
 describe('ConditionalQueryBuilder', () => {
     before('creates object of type ConditionalQueryBuilder that has expressionBuilder properties', () => {
         expect(new ConditionalQueryBuilder()).to.be.an.instanceof(ConditionalQueryBuilder)
-        expect(cqb).to.include(expressionBuilder);
-        expect(cqb.params).to.deep.equal(expressionBuilder.params);
     });
 
     beforeEach('resets conditional params', () => {
-        cqb.resetExpressionParams();
+        cqb.params = cqb.buildExpressionParams();
     });
 
     describe('init', () => {
@@ -24,6 +26,25 @@ describe('ConditionalQueryBuilder', () => {
             expect(cqb.TableName).to.equal(tablename);
             expect(cqb.doc).to.equal(docFn);
             expect(cqb.db).to.equal(dbFn);
+        });
+    });
+
+    describe('init multiple instances', () => {
+        const a = DynamoDB.select('a');
+        const b = DynamoDB.select('b');
+        const c = DynamoDB.select('c');
+
+        it('can inits multiple instances', () => {
+            expect(a.params).to.deep.equal(b.params);
+            expect(b.params).to.deep.equal(c.params);
+        });
+        it('does not share same param objects', () => {
+            a.if('a', '>', 0);
+            b.if('c', '<', 0);
+            c.where('a', 'contains', 'a');
+            expect(a.params).to.not.deep.equal(b.params);
+            expect(b.params).to.not.deep.equal(c.params);
+            expect(a.params).to.not.deep.equal(c.params);
         });
     });
 
@@ -56,20 +77,14 @@ describe('ConditionalQueryBuilder', () => {
     describe('#between', () => {
         it('adds between(value AND value) condition', () => {
             cqb.between(1, 'age', 2);
-            expect(cqb.params).to.deep.include({
-                ExpressionAttributeNames: {'#age':'age'},
-                ExpressionAttributeValues: {':a': 1, ':b': 2},
-                ConditionExpression: [ '(#age BETWEEN :a AND :b)' ]
-            });
+            cqb.conditionCheck('(#age BETWEEN :a AND :b)');
         });
     });
 
     describe('#in', () => {
         it('adds (attr in array) expression from js array', () => {
             cqb.in([1,2,3,5,0]);
-            expect(cqb.params).to.deep.include({
-                ConditionExpression: [ '(IN :a, :b, :c, :d, :e)' ]
-            });
+            cqb.conditionCheck('(IN :a, :b, :c, :d, :e)');
         });
     });
 
@@ -77,14 +92,14 @@ describe('ConditionalQueryBuilder', () => {
         describe('#typeIs', () => {
             it('adds typeIs(attr, type) condition', () => {
                 cqb.where('maxAge', 'typeIs', 'N');
-                expect(cqb.params.ConditionExpression).to.deep.equal(['(attribute_type(#maxAge, :a))']);
+                cqb.conditionCheck('(attribute_type(#maxAge, :a))');
             });
         });
 
         describe('#contains', () => {
             it('adds contains(attr, substr) condition', () => {
                 cqb.where('address', 'contains', 'paris');
-                expect(cqb.params.ConditionExpression).to.deep.equal(['(contains(#address, :a))']);
+                cqb.conditionCheck('(contains(#address, :a))');
             });
         });
     });
@@ -92,15 +107,11 @@ describe('ConditionalQueryBuilder', () => {
     describe('#createConditionList', () => {
         it('creates a list of condition from single attribute', () => {
             cqb.createConditionList('gender', 'exists');
-            expect(cqb.params).to.deep.include({
-                ConditionExpression: [ '(exists(#gender))' ]
-            });
+            cqb.conditionCheck('(exists(#gender))');
         });
         it('creates a list of condition from array of attributes', () => {
             cqb.createConditionList(['gender','age','health'], 'condition');
-            expect(cqb.params).to.deep.include({
-                ConditionExpression: [ '(condition(#gender) AND condition(#age) AND condition(#health))' ]
-            });
+            cqb.conditionCheck('(condition(#gender) AND condition(#age) AND condition(#health))');
         });
     });
 
@@ -111,7 +122,7 @@ describe('ConditionalQueryBuilder', () => {
 
             // store actual params and then resets
             const params = cqb.params;
-            cqb.resetExpressionParams();
+            cqb.buildExpressionParams();
 
             cqb.createConditionList('g', 'attribute_exists');
             cqb.createConditionList('f', 'attribute_not_exists');
