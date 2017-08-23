@@ -23,9 +23,12 @@ describe('#update', () => {
       return Table.update(item, { a: 0, b: 0 })
         .then(upd => assert.deepInclude(upd, { a: 0, b: 0 }));
     });
-    it("should remove item's attribute", function() {
+    it("should remove item's attribute", () => {
       return Table.removeAttribute({ name: 'abdu' }, [ 'a' ])
         .then(upd => assert.notDeepInclude(upd, { a: 0 }));
+    });
+    it('fails if attribute does not exists', () => {
+      return Table.removeAttribute({ name: 'abdu' }, [ 'col' ]);
     });
   });
 
@@ -107,6 +110,20 @@ describe('#update', () => {
     it('should decrement nested prop', () =>
       Table.decrement('prop.a', 1).update(nestedItem).then(upd => assert.equal(upd.prop.a, 0))
     );
+  });
+
+  describe('chaining conditions', () => {
+    before('adds an item', () => TableComb.add({
+      name: 'Alain', age: 64, value: 1, charm: 89, tribe: 'footix'
+    }));
+    it('can chain multiple conditions', () => {
+      return TableComb
+        .if('age', '<', 100)
+        .if('charm', '<>', 0)
+        .if('value', '>', -1)
+        .update({ name: 'Alain', tribe: 'footix' }, { value: 2 }, true)
+        .then(upd => assert.equal(upd.value, 2));
+    });
   });
 
 });
