@@ -4,8 +4,8 @@ const { checkConditionExpression } = require('./unit_helpers');
 const ConditionalQueryBuilder = require('../../lib/ConditionalQueryBuilder');
 
 const tablename = 'table-name';
-const docFn = function doc(){};
-const dbFn = function db(){};
+const docFn = function doc(){ };
+const dbFn = function db(){ };
 const cqb = new ConditionalQueryBuilder(tablename, docFn, dbFn);
 
 // sets params argument to cqb.params for further conditionExpression checks
@@ -72,6 +72,22 @@ describe('ConditionalQueryBuilder', () => {
                 ConditionExpression: [ '(#a = :a)', '(#c > :b)' ]
             });
         });
+
+        it('works with chained ifs as well', () => {
+            cqb
+            .if('uid', '=', 'aa')
+            .if('name', '=', 'Fear')
+            .if('age', '<', 1)
+            .if('b', '>', 2)
+            .if('c', '<>', 3)
+            .if('e', '<=', 5);
+            cqb.conditionCheck('(#uid = :a)');
+            cqb.conditionCheck('(#name = :b)');
+            cqb.conditionCheck('(#age < :c)');
+            cqb.conditionCheck('(#b > :d)');
+            cqb.conditionCheck('(#c <> :e)');
+            cqb.conditionCheck('(#e <= :f)');
+        });
     });
 
     describe('#between', () => {
@@ -83,8 +99,8 @@ describe('ConditionalQueryBuilder', () => {
 
     describe('#in', () => {
         it('adds (attr in array) expression from js array', () => {
-            cqb.in([1,2,3,5,0]);
-            cqb.conditionCheck('(IN :a, :b, :c, :d, :e)');
+            cqb.inList('age', [1,2,3,5,0]);
+            cqb.conditionCheck('(#age IN (:a, :b, :c, :d, :e))');
         });
     });
 
