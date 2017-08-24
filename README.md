@@ -228,7 +228,7 @@ Please refer to "Attribute types association" section for the list of type attri
 
 ```js
 // Updates user momo if his friends attribute is N (number)
-UserTable.where('friends', 'typeIs', 'N').update(momo, { friends: 0 }); // Won't update
+UserTable.where('friends', 'typeIs', 'N').update(momo, { friends: 0 });
 ```
 
 <kbd>inList</kbd>
@@ -236,7 +236,7 @@ UserTable.where('friends', 'typeIs', 'N').update(momo, { friends: 0 }); // Won't
 - matches attribute with provided array
 
 ```js
-// Gets user named 'abel' if he has a friend name 'abdu' or 'chris'
+// Gets user named 'abel' if he has a friend named 'abdu' or 'chris'
 UserTable.inList('friends', [ 'abdu', 'chris' ]).query('name', '=', 'abel');
 
 ```
