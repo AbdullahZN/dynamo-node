@@ -15,13 +15,9 @@ const errorCodes = {
 
 // error callbacks
 const errors = {
-  failure: (d) => {
-    throw new Error('assert failed')
-  },
-  conditional: ({ code }) => {
-    assert.include(code, errorCodes.CONDITION);
-  },
-  validation: ({ code }) => assert.equal(code, errorCodes.VALIDATION)
+  failure:      () => { throw new Error('assert failed') },
+  conditional:  (err) => assert.include(err.code, errorCodes.CONDITION),
+  validation:   (err) => assert.equal(err.code, errorCodes.VALIDATION)
 };
 
 module.exports = {

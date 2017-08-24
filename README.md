@@ -128,6 +128,10 @@ UserTable.update({ name: "abel" }, {
   'clothes.shirts': 10,
   'clothes.polos': 3
 });
+
+UserTable.update(key, attributes, 'OLD'); // returns item's pre-update state
+UserTable.update(key, attributes, 'UPD'); // default, returns only updated attributes
+UserTable.update(key, attributes, 'NEW'); // returns item's post-update state
 ```
 
 _**Delete**_
@@ -192,19 +196,46 @@ UserTable
 
 _**Attribute functions**_
 
+
+<kbd>beginsWith</kbd>
+
+- matches a substring with the beggining of an attribute
+
 ```js
-const momo = { name: "momo" };
 
 // Updates user if nickname attribute begins with a 'm'
-UserTable.where('nickname', 'beginsWith', 'm').update(momo, { nickname: "momomo" });
+UserTable.where('nickname', 'beginsWith', 'm').update(momo, { nickname: "lol" });
+```
 
+<kbd>contains</kbd>
+
+- String: matches substring
+- List: matches element
+
+```js
 // Updates user if nickname contains 'lol'
-UserTable.where('nickname', 'contains', 'lol').update(momo, { friends: ["lololo"] });
+UserTable.where('nickname', 'contains', 'lol').update(momo, { fun: true });
 
+// Updates user if 'homer' is in parents list
+UserTable.where('parents', 'contains', 'homer').update(momo, { cool: true });
+```
+
+<kbd>typeIs</kbd>
+
+- matches attribute type
+
+Please refer to "Attribute types association" section for the list of type attributes
+
+```js
 // Updates user momo if his friends attribute is N (number)
-// Please refer to "Attribute types association" section for the list of type attributes
 UserTable.where('friends', 'typeIs', 'N').update(momo, { friends: 0 }); // Won't update
+```
 
+<kbd>inList</kbd>
+
+- matches attribute with provided array
+
+```js
 // Gets user named 'abel' if he has a friend name 'abdu' or 'chris'
 UserTable.inList('friends', [ 'abdu', 'chris' ]).query('name', '=', 'abel');
 
@@ -281,9 +312,7 @@ Batch.batchDelete(batchDelete);
 
 #### Return values
 
-Following previous examples, here's how you handle return values from each methods.
-
-> Note: All methods return promises
+All methods return promises
 
 ```js
 // outputs "Abdu"

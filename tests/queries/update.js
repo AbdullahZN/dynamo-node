@@ -56,13 +56,30 @@ describe('#update', () => {
     });
 
     describe('#where(,contains,)', () => {
-      it("succeeds when condition is met", () =>
-        Table.where('name', 'contains', 'abd').update(item, { b: 0 })
-      );
-      it("should not update item if name doesn't contain 'abel'", () =>
-        Table.where('name', 'contains', 'marcelo').update(item, { b: 1 })
-          .catch(errors.conditional).then((data) => assert.typeOf(data, 'undefined'))
-      );
+        const key = { name: 'abelz' };
+        const item = { name: 'abelz', friends: [ 'lol', 'fun' ], brother: 'lim' };
+
+        before('adds item', () => Table.add(item) );
+
+        it("works with strings", () => {
+            return Table
+                .where('brother', 'contains', 'lim')
+                .update(key, { b: 0 }, 'OLD')
+                .then(olditem => assert.deepEqual(olditem, item));
+        });
+
+        it("works with lists", async () => {
+            Table.where('friends', 'contains', 'fun');
+
+            assert.deepEqual({ cool: true }, await Table.update(key, { cool: true }));
+        });
+
+        it("fails if condition unmet", () => {
+            return Table
+                .where('name', 'contains', 'marcel')
+                .update(key, { b: 1 })
+                .catch(errors.conditional);
+        });
     });
 
     describe('#where(,typeIs,)', () => {
@@ -71,59 +88,63 @@ describe('#update', () => {
         Table.where('a', 'typeIs', 'N').update(item, { c: 0 })
       );
       it('fails otherwise', () =>
-        Table.where('b', 'typeIs', 'S').update(item, { c: 1 })
-          .catch(errors.conditional).then((data) => assert.typeOf(data, 'undefined'))
+        Table.where('b', 'typeIs', 'S').update(item, { c: 1 }).catch(errors.conditional)
       );
     });
   });
 
-  describe('nested conditionals', () => {
-    it('should update nested object if condition is true', () =>
-      Table.if('prop.a', '=', 0).update(nestedItem, { children: 4 })
-        .then(upd => assert.equal(upd.children, 4))
-    );
-  });
+    describe('nested conditionals', () => {
+        it('updates nested prop', async () => {
+            const { children } = await Table.if('prop.a', '=', 0).update(nestedItem, { children: 4 });
 
-  describe('List append and remove', () => {
-    it('should add to existing list', () =>
-      Table.addToList({ list: [5] }).update(array).then(upd => assert.equal(upd.list[4], 5))
-    );
-    it('should remove from list', () =>
-      // should remove first & second item
-      Table.removeFromList({ list: [0, 1] }).update(array).then(upd => {
-        assert.notInclude(upd.list, [0, 1]);
-        assert.equal(upd.list[0], 2);
-      })
-    );
-  });
-
-  describe('Incrementing and Decrementing', () => {
-    it('should increment prop', () =>
-      Table.increment('a', 1).update(item).then(upd => assert.equal(upd.a, 1))
-    );
-    it('should increment nested prop', () =>
-      Table.increment('prop.a', 1).update(nestedItem).then(upd => assert.equal(upd.prop.a, 1))
-    );
-    it('should decrement prop', () =>
-      Table.decrement('a', 1).update(item).then(upd => assert.equal(upd.a, 0))
-    );
-    it('should decrement nested prop', () =>
-      Table.decrement('prop.a', 1).update(nestedItem).then(upd => assert.equal(upd.prop.a, 0))
-    );
-  });
-
-  describe('chaining conditions', () => {
-    before('adds an item', () => TableComb.add({
-      name: 'Alain', age: 64, value: 1, charm: 89, tribe: 'footix'
-    }));
-    it('can chain multiple conditions', () => {
-      return TableComb
-        .if('age', '<', 100)
-        .if('charm', '<>', 0)
-        .if('value', '>', -1)
-        .update({ name: 'Alain', tribe: 'footix' }, { value: 2 }, true)
-        .then(upd => assert.equal(upd.value, 2));
+            assert.equal(4, children);
+        });
     });
+
+    describe('List append and remove', () => {
+
+        it('should add to existing list', async () => {
+            const { list } = await Table.addToList({ list: [5] }).update(array);
+
+            assert.equal(5, list[4]);
+        });
+
+        it('should remove from list', async () => {
+            // should remove first & second item
+            const { list } = await Table.removeFromList({ list: [0, 1] }).update(array);
+
+            assert.notInclude(list, [0, 1]);
+            assert.equal(list[0], 2);
+        });
   });
+
+    describe('Incrementing and Decrementing', () => {
+        it('should increment prop', () =>
+            Table.increment('a', 1).update(item).then(upd => assert.equal(upd.a, 1))
+        );
+        it('should increment nested prop', () =>
+            Table.increment('prop.a', 1).update(nestedItem).then(upd => assert.equal(upd.prop.a, 1))
+        );
+        it('should decrement prop', () =>
+          Table.decrement('a', 1).update(item).then(upd => assert.equal(upd.a, 0))
+        );
+        it('should decrement nested prop', () =>
+          Table.decrement('prop.a', 1).update(nestedItem).then(upd => assert.equal(upd.prop.a, 0))
+        );
+    });
+
+    describe('chaining conditions', () => {
+        before('adds an item', () => TableComb.add({
+            name: 'Alain', age: 64, value: 1, charm: 89, tribe: 'footix'
+        }));
+        it('can chain multiple conditions', () => {
+            return TableComb
+                .if('age', '<', 100)
+                .if('charm', '<>', 0)
+                .if('value', '>', -1)
+                .update({ name: 'Alain', tribe: 'footix' }, { value: 2 }, 'NEW')
+                .then(upd => assert.equal(upd.value, 2));
+        });
+    });
 
 });
