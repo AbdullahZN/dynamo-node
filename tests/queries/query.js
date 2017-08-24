@@ -25,6 +25,22 @@ describe('#query', () => {
       .then(({ Count }) => assert.equal(Count, 0));
   });
 
+  describe('get item in specific list', () => {
+      before('add item', () => Table.add({ name: 'abdu', age: 1, status: 3 }));
+          it('gets item if item is in list', () => {
+              return Table
+                .inList('status', [ 1,2,3 ])
+                .query('name', '=', 'abdu')
+                .then(({ Count }) => assert.equal(1, Count));
+          })
+          it('gets item if item is in list', () => {
+              return Table
+                .inList('status', [ 5 ])
+                .query('name', '=', 'abdu')
+                .then(({ Count }) => assert.equal(0, Count));
+          })
+      });
+
   it('returns filtered item by secondary index', () => {
     return Table.useIndex('age-index').if('name', '=', 'a').query('age', '=', 5)
     .then(({ Count }) => assert.equal(Count, 1));
