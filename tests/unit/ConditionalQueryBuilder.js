@@ -99,8 +99,8 @@ describe('ConditionalQueryBuilder', () => {
 
     describe('#in', () => {
         it('adds (attr in array) expression from js array', () => {
-            cqb.in([1,2,3,5,0]);
-            cqb.conditionCheck('(IN :a, :b, :c, :d, :e)');
+            cqb.inList('age', [1,2,3,5,0]);
+            cqb.conditionCheck('(#age IN (:a, :b, :c, :d, :e))');
         });
     });
 
