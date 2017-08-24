@@ -16,7 +16,7 @@ module.exports      = (region, configPath) => {
 
     const config = { region };
 
-    if (process.env.NODE_ENV == 'test') {
+    if ( ['test','dev'].indexOf(process.env.DYNAMO_ENV) >= 0) {
         Object.assign(config, {
             "apiVersion": "2012-08-10",
             "accessKeyId": "a",

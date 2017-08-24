@@ -1,18 +1,17 @@
 # DynamoDB ORM
 [![Travis-ci](https://travis-ci.org/AbdullahZN/dynamo-node.svg?branch=master)](https://travis-ci.org/AbdullahZN/dynamo-node)
-[![Code Climate](https://codeclimate.com/github/AbdullahZN/dynamo-node/badges/gpa.svg)](https://codeclimate.com/github/AbdullahZN/dynamo-node)
 
 This DynamoDB ORM for node.js aims to provide a beautiful, simple and complete implementation to work with dynamodb databases. You can easily select a table and start querying/writing data, from simple requests to conditional ones without prior knowledge.
 
 Current features:
- - **Expression Abstraction :** Condition, Attribute values/names
- - **Conditional Requests :** Add, update, delete conditionally
- - **Attribute Functions :** begins_with, contains, typeIs
+ - **Expression Abstraction:** Condition, Attribute values/names
+ - **Conditional Requests:** Add, update, delete conditionally
+ - **Attribute Functions:** begins_with, contains, typeIs
  - **Incrementing Decrementing**
  - **List, Set Append/Remove**
  - **Attribute Removal**
 
-Please note this repository is a work in progress. Contributions are welcome.
+#### **Please note this repository is a work in progress. Contributions are welcome.**
 
 ## Requirements
 
@@ -31,6 +30,7 @@ You can either set your AWS credentials as env variables or as a JSON file
   "secretAccessKey": "yourSecret",
 }
 ```
+
 ```bash
 # AWS credentials as ENV vars
 AWS_SECRET_ACCESS_KEY="myKey"
@@ -93,6 +93,7 @@ _**Delete**_
 UserTable.deleteTable();
 ```
 
+
 ---
 
 #### Items
@@ -147,7 +148,9 @@ UserTable.useIndex('age-index').query('age', '=', 5);
 _**Scan**_
 
 Returns all items from table
+
 ```js
+// a very expensive task !
 UserTable.scan();
 ```
 
@@ -192,11 +195,18 @@ _**Attribute functions**_
 ```js
 const momo = { name: "momo" };
 
-UserTable.where('name', 'beginsWith', 'm').update(momo, { nickname: "momomo" });
-UserTable.where('nickname', 'contains', 'mo').update(momo, { friends: ["lololo"] });
+// Updates user if nickname attribute begins with a 'm'
+UserTable.where('nickname', 'beginsWith', 'm').update(momo, { nickname: "momomo" });
 
+// Updates user if nickname contains 'lol'
+UserTable.where('nickname', 'contains', 'lol').update(momo, { friends: ["lololo"] });
+
+// Updates user momo if his friends attribute is N (number)
 // Please refer to "Attribute types association" section for the list of type attributes
 UserTable.where('friends', 'typeIs', 'N').update(momo, { friends: 0 }); // Won't update
+
+// Gets user named 'abel' if he has a friend name 'abdu' or 'chris'
+UserTable.inList('friends', [ 'abdu', 'chris' ]).query('name', '=', 'abel');
 
 ```
 
@@ -266,7 +276,7 @@ const batchDelete = {
     'table2': [ { pid: 3 }, { pid: 4 } ],
 };
 
-Batch.batchDelte(batchDelete);
+Batch.batchDelete(batchDelete);
 ```
 
 #### Return values
@@ -295,14 +305,47 @@ UserTable.add({ name: "Chris", age: "65" })
 
 ---
 
-#### Tests
+#### Test & Development
 
 Tests are located in the **./tests** folder
-Note that you have to create two Tables named "**aws.table.for.testing**" and "**aws.table.combined.for.testing**" in order for them to run correctly.
 
-Here's full testing process using npm scripts
+To run tests or to start working with dynamo-node, you should run a local dynamodb database
+
+Here is the quickest process to setup a local dynamodb database
 
 ```bash
-> npm run createTable // can take a few seconds to be created even after process exits
-> npm run test
+# jre 7+ required, you can find a complete ubuntu installation in .travis.yml configuration
+
+$ mkdir dyn && cd dyn
+# wget or curl -O, not both
+$ wget https://s3.eu-central-1.amazonaws.com/dynamodb-local-frankfurt/dynamodb_local_latest.tar.gz
+$ curl -O https://s3.eu-central-1.amazonaws.com/dynamodb-local-frankfurt/dynamodb_local_latest.tar.gz
+$ tar -xvf *.tar.gz
+# this will run a local dynamodb database listening on 8000
+$ java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb &
+$ cd ..
+```
+
+Now that we have our database running, we have to create two tables named "**aws.table.for.testing**" and "**aws.table.combined.for.testing**" in order for them to run correctly.
+
+We can create those tables with the **./testTable.js** script.
+
+```bash
+$ node testTable create
+
+# if needed
+$ node testTable delete
+```
+
+Run tests
+```bash
+> npm run test || yarn test
+```
+
+#### Environment
+
+You need to set up a specific envvar to start development with dynamo-node and a local dynamo db
+
+```js
+process.env.DYNAMO_ENV = 'dev';
 ```
