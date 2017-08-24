@@ -1,8 +1,7 @@
-process.env.NODE_ENV = 'test';
+process.env.DYNAMO_ENV = 'test';
 
 const { assert, expect, should } = require('chai');
 const DynamoDB = require('../index')('eu-central-1');
-
 
 // Test Tables
 const Table = DynamoDB.select('aws.table.for.testing');
@@ -16,13 +15,9 @@ const errorCodes = {
 
 // error callbacks
 const errors = {
-  failure: (d) => {
-    throw new Error('assert failed')
-  },
-  conditional: ({ code }) => {
-    assert.include(code, errorCodes.CONDITION);
-  },
-  validation: ({ code }) => assert.equal(code, errorCodes.VALIDATION)
+  failure:      () => { throw new Error('assert failed') },
+  conditional:  (err) => assert.include(err.code, errorCodes.CONDITION),
+  validation:   (err) => assert.equal(err.code, errorCodes.VALIDATION)
 };
 
 module.exports = {
