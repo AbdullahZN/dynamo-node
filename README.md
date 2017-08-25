@@ -4,9 +4,9 @@
 This DynamoDB ORM for node.js aims to provide a beautiful, simple and complete implementation to work with dynamodb databases. You can easily select a table and start querying/writing data, from simple requests to conditional ones without prior knowledge.
 
 Current features:
- - **Expression Abstraction:** Condition, Attribute values/names
- - **Conditional Requests:** Add, update, delete conditionally
- - **Attribute Functions:** begins_with, contains, typeIs
+ - **Expression Abstraction:** Condition, Attribute values/names, Projections, Filters, KeyConditions
+ - **Conditional Requests:** Add, update, delete and query conditionally
+ - **Attribute Functions:** begins_with, contains, typeIs, in
  - **Incrementing Decrementing**
  - **List, Set Append/Remove**
  - **Attribute Removal**
