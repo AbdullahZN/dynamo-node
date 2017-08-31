@@ -10,31 +10,29 @@ const getPromise = (func) => {
 };
 
 // Exports DynamoDB function that returns an object of methods
-module.exports      = (region, configPath) => {
-    if (! (configPath || process.env.AWS_ACCESS_KEY_ID) )
-        return console.error("No AWS_ACCESS_KEY_ID found");
-
+module.exports = (region = 'eu-central-1', configPath) => {
     const config = { region };
 
-    if ( ['test','dev'].indexOf(process.env.DYNAMO_ENV) >= 0) {
-        Object.assign(config, {
-            "apiVersion": "2012-08-10",
-            "accessKeyId": "a",
-            "secretAccessKey": "a",
-            "region":"eu-central-1",
-            "endpoint": "http://localhost:8000"
+    if (process.env.DYNAMO_ENV === 'test') {
+        AWS.config.update({
+            apiVersion: "2012-08-10",
+            accessKeyId: process.env.DYNAMO_ENV,
+            secretAccessKey: process.env.DYNAMO_ENV,
+            endpoint: "http://localhost:8000"
         });
     }
-
-    // Immediately init DynamoDB from config file
-    configPath && AWS.config.loadFromPath(configPath);
-    AWS.config.update(config);
+    else if (configPath) {
+        AWS.config.loadFromPath(configPath);
+    }
 
     // gets docClient function to return promise
-    const db = getPromise(new AWS.DynamoDB());
+    const dynamoDB = new AWS.DynamoDB();
+    const db = getPromise(dynamoDB);
     const doc = getPromise(new AWS.DynamoDB.DocumentClient());
 
     return {
+        config: dynamoDB.config,
+
         // Select Table and return method object for further queries
         select: (TableName) => {
             return new ConditionalQueryBuilder(TableName, doc, db);

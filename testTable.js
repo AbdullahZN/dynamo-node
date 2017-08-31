@@ -3,7 +3,6 @@ process.env.DYNAMO_ENV = 'test';
 const DynamoDB = require('./index')('eu-central-1');
 const arg = process.argv[2];
 
-
 const baseParams = {
   ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
 }
@@ -68,5 +67,7 @@ switch(arg) {
       .catch(err => console.log(err.message.split('\n')[0]));
     break;
   default:
-    console.log(`Usage: node ${process.argv[1]} <command>\nAvailable command: create, delete`);
+    const cmd = process.argv[0].split('/').splice(-1).join();
+    const opr = process.argv[1].split('/').splice(-1).join();
+    console.log(`Usage: ${cmd} ${opr} <operation>\nAvailable operations: create, delete`);
 }
