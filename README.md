@@ -310,6 +310,24 @@ const batchDelete = {
 Batch.batchDelete(batchDelete);
 ```
 
+#### Projections
+
+You can select which attributes you want back from the result when performing get, query or scan operations
+
+```js
+Table.add({ id: 1, status: 2, a, b, c, d });
+Table.add({ id: 2, status: 2, e, f, g, h });
+
+// returns { Items: [{ id: 1 }], Count: 1, ... }
+Table.project('id').query('id', '=', 1);
+
+// returns { Items: [{ id: 1, status: 2 }, { id: 2, status: 2 }], ... }
+Table.project(['id', 'status']).scan();
+
+// returns { status: 2 }
+Table.project(['status']).get({ id: 1 });
+```
+
 #### Return values
 
 All methods return promises

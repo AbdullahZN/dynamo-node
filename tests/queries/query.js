@@ -1,53 +1,110 @@
 const { assert, Table, TableComb, errors } = require('../test_helpers');
 
-// Item Keys
-const key = { name: 'a' };
-const keys = { name: 'a', tribe: 'yt' };
+const item = { name: 'query-a', age: 5 };
+const itemWithList = { name: 'query', age: 1, status: 3, gf: 'lat' };
 
 describe('#query', () => {
-  before(() => Table.add({ name: 'a', age: 5 }));
+  before(() =>
+    Promise.all([
+      Table.add(item),
+      Table.add(itemWithList),
+    ])
+  );
 
-  it('succeeds with simple query', () => {
-    return Table.query('name', '=', 'a');
-  });
-
-  it('succeeds with secondary index', () => {
-    return Table.useIndex('age-index').query('age', '=', 5);
-  });
-
-  it('returns filtered item with primary index', () => {
-    return Table.if('age', '=', 5).query('name', '=', 'a')
-      .then(({ Count }) => assert.equal(Count, 1));
-  });
-
-  it('returns 0 item if condition is unmet', () => {
-    return Table.if('age', '=', 3).query('name', '=', 'a')
-      .then(({ Count }) => assert.equal(Count, 0));
-  });
-
-  describe('get item in specific list', () => {
-      before('add item', () => Table.add({ name: 'abdu', age: 1, status: 3 }));
-          it('gets item if item is in list', () => {
-              return Table
-                .inList('status', [ 1,2,3 ])
-                .query('name', '=', 'abdu')
-                .then(({ Count }) => assert.equal(1, Count));
+  describe('with partition key only', () => {
+    describe('with principal index', () => {
+      it('returns item with keyCondition only', () =>
+        Table.query('name', '=', 'query-a')
+          .then((result) => {
+            assert.property(result, 'Items');
+            assert.deepEqual(result.Items, [item]);
           })
-          it('gets item if item is in list', () => {
-              return Table
-                .inList('status', [ 5 ])
-                .query('name', '=', 'abdu')
-                .then(({ Count }) => assert.equal(0, Count));
+      );
+      it('returns item with a single FilterExpression', () =>
+        Table.if('age', '=', 5)
+          .query('name', '=', 'query-a')
+          .then((result) => {
+            assert.propertyVal(result, 'Count', 1);
+            assert.deepEqual(result.Items, [item]);
           })
+      );
+      it('returns item with more FilterExpressions', () =>
+        Table.if('age', '=', 1)
+          .where('gf', 'contains', 'la')
+          .query('name', '=', 'query')
+          .then((result) => {
+            assert.propertyVal(result, 'Count', 1);
+            assert.deepEqual(result.Items, [itemWithList]);
+          })
+      );
+
+      it('returns empty array if FilterExpression does not match any item', () =>
+        Table.if('age', '=', 3)
+          .query('name', '=', 'query-a')
+          .then((result) => {
+            assert.propertyVal(result, 'Count', 0);
+            assert.deepEqual(result.Items, []);
+          })
+      );
+
+      it('returns item if attribute matches list', () =>
+        Table.inList('status', [1, 2, 3])
+          .query('name', '=', 'query')
+          .then((result) => {
+            assert.propertyVal(result, 'Count', 1);
+            assert.deepEqual(result.Items, [itemWithList]);
+          })
+      );
+
+      it('returns empty array if attribute does not match list', () =>
+        Table.inList('status', [5])
+          .query('name', '=', 'query')
+          .then((result) => {
+            assert.propertyVal(result, 'Count', 0);
+            assert.deepEqual(result.Items, []);
+          })
+      );
+      it('returns only projected attributes', async () => {
+        await Table.project('status')
+          .query('name', '=', 'query')
+          .then((result) => {
+            assert.property(result, 'Items');
+            assert.deepEqual(result.Items, [{ status: 3 }]);
+          });
+        await Table.project(['status', 'name'])
+          .query('name', '=', 'query')
+          .then((result) => {
+            assert.property(result, 'Items');
+            assert.deepEqual(result.Items, [{ status: 3, name: 'query' }]);
+          });
       });
+    });
 
-  it('returns filtered item by secondary index', () => {
-    return Table.useIndex('age-index').if('name', '=', 'a').query('age', '=', 5)
-    .then(({ Count }) => assert.equal(Count, 1));
-  });
+    describe('with secondary index', () => {
+      it('works with keyCondition only', () =>
+        Table.useIndex('age-index')
+          .query('age', '=', 5)
+          .then((result) => {
+            assert.propertyVal(result, 'Count', 1);
+            assert.deepEqual(result.Items, [item]);
+          })
+      );
+      it('returns filtered item', () =>
+        Table.useIndex('age-index')
+          .if('name', '=', 'query-a')
+          .query('age', '=', 5)
+          .then((result) => {
+            assert.propertyVal(result, 'Count', 1);
+            assert.deepEqual(result.Items, [item]);
+          })
+      );
 
-  it('fails with unexisting secondary index', () => {
-    return Table.useIndex('age-').query('name', '=', 'a')
-      .then(errors.failure).catch(errors.validation);
+      it('fails with wrong secondary index', () =>
+        Table.useIndex('age-')
+          .query('name', '=', 'query-a')
+          .then(errors.failure)
+          .catch(errors.validation)
+      );
+    });
   });
 });

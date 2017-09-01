@@ -1,18 +1,18 @@
-const { assert, Table, TableComb, errors } = require('../test_helpers');
+const { assert, Table } = require('../test_helpers');
 
 describe('#scan', () => {
-    before('add item', () => Table.add({ name: 'scan' }));
+  before('add item', () => Table.add({ name: 'scan' }));
 
-    it('succeeds without params', () => Table.scan());
+  it('works without params', () => Table.scan());
+  it('works with projections', () => Table.project(['name']).scan());
 
-    it('succeeds with truthy and falsy conditions', async () => {
-        // truthy
-        const t = await Table.where('name', 'contains', 'can').scan();
+  it('works with conditionals', async () => {
+    // truthy
+    const t = await Table.where('name', 'contains', 'can').scan();
+    // falsy
+    const f = await Table.where('name', 'beginsWith', 't').scan();
 
-        // falsy
-        const f = await Table.where('name', 'beginsWith', 't').scan();
-
-        assert.equal(1, t.Count);
-        assert.equal(0, f.Count);
-    });
+    assert.propertyVal(t, 'Count', 1);
+    assert.propertyVal(f, 'Count', 0);
+  });
 });
