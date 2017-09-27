@@ -7,9 +7,9 @@ const getPromise = func => (method, params) => new Promise((resolve, reject) => 
 
 // Exports DynamoDB function that returns an object of methods
 module.exports = (region = 'eu-central-1', configPath) => {
+  AWS.config.update({ region });
   if (process.env.DYNAMO_ENV === 'test') {
     AWS.config.update({
-      region,
       apiVersion: '2012-08-10',
       accessKeyId: process.env.DYNAMO_ENV,
       secretAccessKey: process.env.DYNAMO_ENV,
@@ -19,15 +19,25 @@ module.exports = (region = 'eu-central-1', configPath) => {
     AWS.config.loadFromPath(configPath);
   }
 
-  // gets docClient function to return promise
   const dynamoDB = new AWS.DynamoDB();
+  if (!dynamoDB.config.credentials) {
+    throw new Error('Can not load AWS credentials');
+  }
+
+  const docClient = new AWS.DynamoDB.DocumentClient();
   const db = getPromise(dynamoDB);
-  const doc = getPromise(new AWS.DynamoDB.DocumentClient());
+  const doc = getPromise(docClient);
 
   return {
     config: dynamoDB.config,
 
     // Select Table and return method object for further queries
-    select: TableName => new ConditionalQueryBuilder(TableName, doc, db),
+    select: TableName => new ConditionalQueryBuilder(TableName, {
+      docClient,
+      doc,
+      db,
+    }),
+
+    createSet: params => docClient.createSet(params),
   };
 };
