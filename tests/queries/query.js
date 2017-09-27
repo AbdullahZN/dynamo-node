@@ -37,7 +37,6 @@ describe('#query', () => {
             assert.deepEqual(result.Items, [itemWithList]);
           })
       );
-
       it('returns empty array if FilterExpression does not match any item', () =>
         Table.if('age', '=', 3)
           .query('name', '=', 'query-a')
@@ -46,7 +45,6 @@ describe('#query', () => {
             assert.deepEqual(result.Items, []);
           })
       );
-
       it('returns item if attribute matches list', () =>
         Table.inList('status', [1, 2, 3])
           .query('name', '=', 'query')
@@ -55,7 +53,6 @@ describe('#query', () => {
             assert.deepEqual(result.Items, [itemWithList]);
           })
       );
-
       it('returns empty array if attribute does not match list', () =>
         Table.inList('status', [5])
           .query('name', '=', 'query')
@@ -64,6 +61,20 @@ describe('#query', () => {
             assert.deepEqual(result.Items, []);
           })
       );
+      it('returns items within limit range', async () => {
+        const newItems = [
+          ['a', 2],
+          ['b', 2],
+          ['c', 2],
+          ['d', 2]
+        ].map(([name, age]) => Table.add({ name, age }));
+        await Promise.all(newItems);
+        return Table
+          .useIndex('age-index')
+          .limit(2)
+          .query('age', '=', 2)
+          .then(({ Count }) => assert.equal(2, Count));
+      });
       it('returns only projected attributes', async () => {
         await Table.project('status')
           .query('name', '=', 'query')
