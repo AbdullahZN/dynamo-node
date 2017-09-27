@@ -15,4 +15,15 @@ describe('#scan', () => {
     assert.propertyVal(t, 'Count', 1);
     assert.propertyVal(f, 'Count', 0);
   });
+
+  describe('with Limit parameter', () => {
+    [3, 2, 5, 8, 4].forEach(limit =>
+      it(`returns ${limit} items`, () =>
+        Table
+          .limit(limit)
+          .scan()
+          .then(({ Count }) => assert.equal(limit, Count))
+      )
+    );
+  });
 });
