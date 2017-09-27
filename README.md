@@ -31,19 +31,13 @@ You can either set your AWS credentials as env variables or as a JSON file
 }
 ```
 
-```bash
-# AWS credentials as ENV vars
-AWS_SECRET_ACCESS_KEY="myKey"
-AWS_ACCESS_KEY_ID="yourSecret"
-```
-
-
 Require module
 ```js
 const DynamoDB = require('dynamo-node')(region [, credit_path ]);
 // e.g with json credentials
 const DynamoDB = require('dynamo-node')('eu-central-1', './credits.json');
 // e.g with env vars
+process.env.DYNAMO_ENV = 'test';
 const DynamoDB = require('dynamo-node')('eu-central-1');
 ```
 
@@ -266,8 +260,12 @@ FoodTable.removeAttribute(burger, [ 'sold', 'ingredients' ]);
 
 _**Add to/Remove from list attribute**_
 ```js
-FoodTable.addToList({ sellers: [9] }).update(burger) // { ..., sellers: [5,8,9] }
-FoodTable.removeFromList({ sellers: [8, 5] }).update(burger) // { ..., sellers: [9] }
+
+// The provided array of VALUES will be appended to the attribute
+FoodTable.addToList({ sellers: [9] }).update(burger) // { ..., sellers: [5, 8, 9] }
+
+// This time we pass an array of INDEXES from which we want to delete
+FoodTable.removeFromList({ sellers: [1] }).update(burger) // { ..., sellers: [5, 9] }
 ```
 ---
 
@@ -394,5 +392,5 @@ Run tests
 You need to set up a specific envvar to start development with dynamo-node and a local dynamo db
 
 ```js
-process.env.DYNAMO_ENV = 'dev';
+process.env.DYNAMO_ENV = 'test';
 ```

@@ -1,7 +1,7 @@
 {
   "name": "dynamo-node",
-  "version": "1.1.11",
-  "description": "the most handy AWS DynamoDB wrapper yet",
+  "version": "1.1.12",
+  "description": "most handy DynamoDB mapper yet",
   "main": "dynamoDB.js",
   "directories": {
     "test": "tests/*"
@@ -14,11 +14,10 @@
     "eslint": "^4.5.0",
     "eslint-config-airbnb-base": "^11.3.2",
     "eslint-plugin-import": "^2.7.0",
-    "mocha": "^3.3.0",
     "promise-fail": "^1.0.1"
   },
   "scripts": {
-    "test": "mocha tests/*",
+    "test": "DYNAMO_ENV=test mocha --recursive tests",
     "createTable": "node testTable create",
     "deleteTable": "node testTable delete"
   },
@@ -29,10 +28,13 @@
   "keywords": [
     "dynamodb",
     "dynamo",
-    "node",
     "aws-sdk",
     "mapper",
-    "orm"
+    "orm",
+    "dynamodb mapper",
+    "dynamo mapper",
+    "dynamodb orm",
+    "dynamo orm"
   ],
   "author": "Abdullah Uzun",
   "license": "MIT",
