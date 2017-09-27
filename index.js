@@ -24,13 +24,20 @@ module.exports = (region = 'eu-central-1', configPath) => {
     throw new Error('Can not load AWS credentials');
   }
 
+  const docClient = new AWS.DynamoDB.DocumentClient();
   const db = getPromise(dynamoDB);
-  const doc = getPromise(new AWS.DynamoDB.DocumentClient());
+  const doc = getPromise(docClient);
 
   return {
     config: dynamoDB.config,
 
     // Select Table and return method object for further queries
-    select: TableName => new ConditionalQueryBuilder(TableName, doc, db),
+    select: TableName => new ConditionalQueryBuilder(TableName, {
+      docClient,
+      doc,
+      db,
+    }),
+
+    createSet: params => docClient.createSet(params),
   };
 };

@@ -1,8 +1,6 @@
-const { assert, Table, TableComb, errors } = require('../test_helpers');
+const { assert, Table, TableComb, DynamoDB, errors } = require('../test_helpers');
 
 const abdu = { name: 'abdu' };
-const abel = { name: 'abel' };
-const array = { name: 'array' };
 
 describe('#update', () => {
   describe('with principal index', () => {
@@ -13,11 +11,11 @@ describe('#update', () => {
       describe('unconditional requests', () => {
         it('should update item', () =>
           Table.update(abdu, { age: 1, bro: 2 })
-            .then(upd => assert.deepEqual(upd, { age: 1, bro: 2 }))
+            .then(upd => assert.deepInclude(upd, { age: 1, bro: 2 }))
         );
         it("should remove item's attribute", () =>
           Table.removeAttribute(abdu, ['age'])
-            .then(upd => assert.deepEqual(upd, { name: 'abdu', bro: 0 }))
+            .then(upd => assert.deepInclude(upd, { name: 'abdu', bro: 0 }))
         );
         it('fails if attribute does not exists', () =>
           Table.removeAttribute({ name: 'abdu' }, ['col'])
@@ -55,7 +53,9 @@ describe('#update', () => {
           const key = { name: 'abelz' };
           const item = { name: 'abelz', friends: ['lol', 'fun'], brother: 'lim' };
 
-          before('adds item', () => Table.add(item));
+          before('adds item', () =>
+            Table.add(item)
+          );
 
           it('works with strings', () =>
             Table
@@ -80,57 +80,113 @@ describe('#update', () => {
         });
 
         describe('#where(,typeIs,)', () => {
+          const item = { name: 'anItem' };
+          before('adds item to DB', () =>
+            Table.add({ name: 'anItem', a: 1, b: 2 })
+          );
+
           // We don't need to test primary key for type as it is already handled by DynamoDB
           it('succeeds when condition is met', () =>
-            Table.where('a', 'typeIs', 'N').update(item, { c: 0 })
+            Table
+              .where('a', 'typeIs', 'N')
+              .update(item, { c: 0 })
           );
           it('fails otherwise', () =>
-            Table.where('b', 'typeIs', 'S').update(item, { c: 1 }).catch(errors.conditional)
+            Table
+              .where('b', 'typeIs', 'S')
+              .update(item, { c: 1 })
+              .then(errors.failure)
+              .catch(errors.conditional)
           );
         });
       });
-
     });
   });
 
   describe('nested conditionals', () => {
-    it('updates nested prop', async () => {
-      const { children } = await Table.if('prop.a', '=', 0).update(nestedItem, { children: 4 });
+    before('add item', () =>
+      Table.add({ name: 'abdu', prop: { a: 0 } })
+    );
 
-      assert.equal(4, children);
-    });
+    it('updates nested prop', () =>
+      Table
+        .if('prop.a', '=', 0)
+        .update({ name: 'abdu' }, { children: 4 })
+        .then(({ children }) => assert.equal(4, children))
+    );
   });
 
   describe('List append and remove', () => {
-    it('should add to existing list', async () => {
-      const { list } = await Table.addToList({ list: [5] }).update(array);
+    const ingredients = { name: 'ingredients' };
+    const ingredientList = ['coconut', 'olive'];
+    const newIngredients = ['cocoa', 'fish'];
 
-      assert.equal(5, list[4]);
+    beforeEach('adds item to DB', () =>
+      Table.add({ name: 'ingredients', list: ingredientList })
+    );
+
+    it('concats new list items to existing list attribute', () =>
+      Table
+        .addToList({ list: newIngredients })
+        .update(ingredients)
+        .then(({ list }) => assert.deepEqual(
+          ingredientList.concat(newIngredients), list)
+        )
+    );
+
+    it('does not add new item if attribute is a Set', async () => {
+      const seth = { name: 'seth' };
+      const children = DynamoDB.createSet(['a', 'b']);
+
+      await Table.add({ name: 'seth', children });
+      return Table.addToSet({ children: ['c'] })
+        .update(seth)
+        .then(upd => assert.deepEqual(['a', 'b', 'c'], upd.children.values));
     });
 
-    it('should remove from list', async () => {
-      const item = { name: 'a', list: ['a', 'b', 'c', 'd'] };
-      await Table.add(item);
-
-      // should remove first & second item
-      const { list } = await Table.removeFromList({ list: [0, 1] }).update(array);
-
-      assert.deepEqual(list, ['c', 'd']);
-    });
+    /**
+     * Removes element at index 1
+     * We have to query for NEW return values,
+     * as removed attributes do not appear in the UPDATED attribute list
+     */
+    it('should remove from list', () =>
+      Table
+        .removeFromList({ list: [1] })
+        .update(ingredients, null, 'NEW')
+        .then(({ list }) => assert.deepEqual(['coconut'], list))
+    );
   });
 
   describe('Incrementing and Decrementing', () => {
+    const item = { name: 'inc' };
+    const props = { a: 6, p: { q: 100 } };
+
+    beforeEach('adds item to DB', () =>
+      Table.add(Object.assign({}, item, props))
+    );
     it('should increment prop', () =>
-      Table.increment('a', 1).update(item).then(upd => assert.equal(upd.a, 1))
+      Table
+        .increment('a', 1)
+        .update(item)
+        .then(upd => assert.equal(upd.a, props.a + 1))
     );
     it('should increment nested prop', () =>
-      Table.increment('prop.a', 1).update(nestedItem).then(upd => assert.equal(upd.prop.a, 1))
+      Table
+        .increment('p.q', 36)
+        .update(item)
+        .then(({ p }) => assert.equal(p.q, props.p.q + 36))
     );
     it('should decrement prop', () =>
-      Table.decrement('a', 1).update(item).then(upd => assert.equal(upd.a, 0))
+      Table
+        .decrement('a', 14)
+        .update(item)
+        .then(upd => assert.equal(upd.a, props.a - 14))
     );
     it('should decrement nested prop', () =>
-      Table.decrement('prop.a', 1).update(nestedItem).then(upd => assert.equal(upd.prop.a, 0))
+      Table
+        .decrement('p.q', 58)
+        .update(item)
+        .then(({ p }) => assert.equal(p.q, props.p.q - 58))
     );
   });
 

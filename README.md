@@ -261,10 +261,10 @@ FoodTable.removeAttribute(burger, [ 'sold', 'ingredients' ]);
 _**Add to/Remove from list attribute**_
 ```js
 
-// The provided array will be appended to the attribute
+// The provided array of VALUES will be appended to the attribute
 FoodTable.addToList({ sellers: [9] }).update(burger) // { ..., sellers: [5, 8, 9] }
 
-// This time we pass the index from which we want to delete
+// This time we pass an array of INDEXES from which we want to delete
 FoodTable.removeFromList({ sellers: [1] }).update(burger) // { ..., sellers: [5, 9] }
 ```
 ---
