@@ -48,9 +48,6 @@ const DynamoDB = require('dynamo-node')(region, config);
 // Using a json file
 const DynamoDB = require('dynamo-node')(region, './config.json');
 
-// For test (maybe deprecated)
-process.env.DYNAMO_ENV = 'test';
-const DynamoDB = require('dynamo-node')('us-east-1');
 ```
 
 
@@ -399,10 +396,3 @@ Run tests
 > npm run test || yarn test
 ```
 
-#### Environment
-
-You need to set up a specific envvar to start development with dynamo-node and a local dynamo db
-
-```js
-process.env.DYNAMO_ENV = 'test';
-```
