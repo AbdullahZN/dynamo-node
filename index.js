@@ -7,6 +7,27 @@ const getPromise = func => (method, params) => new Promise((resolve, reject) => 
 
 // Exports DynamoDB function that returns an object of methods
 module.exports = (region = 'eu-central-1', config) => {
+
+  AWS.CredentialProviderChain.defaultProviders = [
+    function () { return new AWS.EnvironmentCredentials('AWS'); },
+    function () { return new AWS.EnvironmentCredentials('AMAZON'); },
+    function () { return new AWS.SharedIniFileCredentials(); },
+
+    function () {
+      if (AWS.ECSCredentials.prototype.isConfiguredForEcsCredentials()) {
+        return new AWS.ECSCredentials();
+      }
+      return new AWS.EC2MetadataCredentials();
+    }
+  ];
+
+  var chain = new AWS.CredentialProviderChain();
+
+  chain.resolve((err, cred)=>{
+    AWS.config.credentials = cred;
+  })
+
+
   AWS.config.update({ region });
   if (typeof config === 'string') {
     AWS.config.loadFromPath(config);
