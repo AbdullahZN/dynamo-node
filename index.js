@@ -9,16 +9,14 @@ const getPromise = func => (method, params) => new Promise((resolve, reject) => 
 module.exports = (region = 'eu-central-1', config) => {
 
   AWS.CredentialProviderChain.defaultProviders = [
-    function () { return new AWS.EnvironmentCredentials('AWS'); },
-    function () { return new AWS.EnvironmentCredentials('AMAZON'); },
-    function () { return new AWS.SharedIniFileCredentials(); },
-
     function () {
-      if (AWS.ECSCredentials.prototype.isConfiguredForEcsCredentials()) {
-        return new AWS.ECSCredentials();
-      }
-      return new AWS.EC2MetadataCredentials();
-    }
+      // if (AWS.ECSCredentials.prototype.isConfiguredForEcsCredentials()) {
+      return new AWS.ECSCredentials();
+      // }
+      // return new AWS.EC2MetadataCredentials();
+    },
+    function () { return new AWS.EnvironmentCredentials('AWS'); },
+    function () { return new AWS.SharedIniFileCredentials(); }
   ];
 
   var chain = new AWS.CredentialProviderChain();
@@ -26,7 +24,6 @@ module.exports = (region = 'eu-central-1', config) => {
   chain.resolve((err, cred)=>{
     AWS.config.credentials = cred;
   })
-
 
   AWS.config.update({ region });
   if (typeof config === 'string') {
