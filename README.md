@@ -33,12 +33,21 @@ You can either set your AWS credentials as env variables or as a JSON file
 
 Require module
 ```js
-const DynamoDB = require('dynamo-node')(region [, credit_path ]);
-// e.g with json credentials
-const DynamoDB = require('dynamo-node')('eu-central-1', './credits.json');
-// e.g with env vars
-process.env.DYNAMO_ENV = 'test';
-const DynamoDB = require('dynamo-node')('eu-central-1');
+// Using ENV Variables
+const DynamoDB = require('dynamo-node')('us-east-1');
+
+// Using a json object
+const config = {
+                   "apiVersion": "2012-08-10",
+                   "accessKeyId": "myKey",
+                   "secretAccessKey": "mySecret",
+                   "endpoint": "http://localhost:8072"
+                 }
+const DynamoDB = require('dynamo-node')(region, config);
+
+// Using a json file
+const DynamoDB = require('dynamo-node')(region, './config.json');
+
 ```
 
 
@@ -387,10 +396,3 @@ Run tests
 > npm run test || yarn test
 ```
 
-#### Environment
-
-You need to set up a specific envvar to start development with dynamo-node and a local dynamo db
-
-```js
-process.env.DYNAMO_ENV = 'test';
-```

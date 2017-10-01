@@ -17,7 +17,7 @@
     "promise-fail": "^1.0.1"
   },
   "scripts": {
-    "test": "DYNAMO_ENV=test mocha --recursive tests",
+    "test": "mocha --recursive tests",
     "createTable": "node testTable create",
     "deleteTable": "node testTable delete"
   },
