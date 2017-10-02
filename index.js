@@ -6,17 +6,16 @@ const getPromise = func => (method, params) => new Promise((resolve, reject) => 
 });
 
 // Exports DynamoDB function that returns an object of methods
-module.exports = (region = 'eu-central-1', configPath) => {
+module.exports = (region = 'eu-central-1', config) => {
+
+  // This will force using STS as fallback credentials provider
+  if (!config || (config && config === {}) || (config && config === "")) AWS.config.credentials = new AWS.ECSCredentials();
+
   AWS.config.update({ region });
-  if (process.env.DYNAMO_ENV === 'test') {
-    AWS.config.update({
-      apiVersion: '2012-08-10',
-      accessKeyId: process.env.DYNAMO_ENV,
-      secretAccessKey: process.env.DYNAMO_ENV,
-      endpoint: 'http://localhost:8000',
-    });
-  } else if (configPath) {
-    AWS.config.loadFromPath(configPath);
+  if (typeof config === 'string') {
+    AWS.config.loadFromPath(config);
+  } else if (typeof config === 'object') {
+    AWS.config.update(config);
   }
 
   const dynamoDB = new AWS.DynamoDB();
