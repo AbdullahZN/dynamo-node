@@ -8,22 +8,8 @@ const getPromise = func => (method, params) => new Promise((resolve, reject) => 
 // Exports DynamoDB function that returns an object of methods
 module.exports = (region = 'eu-central-1', config) => {
 
-  AWS.CredentialProviderChain.defaultProviders = [
-    function () {
-      // if (AWS.ECSCredentials.prototype.isConfiguredForEcsCredentials()) {
-      return new AWS.ECSCredentials();
-      // }
-      // return new AWS.EC2MetadataCredentials();
-    },
-    function () { return new AWS.EnvironmentCredentials('AWS'); },
-    function () { return new AWS.SharedIniFileCredentials(); }
-  ];
-
-  var chain = new AWS.CredentialProviderChain();
-
-  chain.resolve((err, cred)=>{
-    AWS.config.credentials = cred;
-  })
+  // This will force using STS as fallback credentials provider
+  if (!config || (config && config === {}) || (config && config === "")) AWS.config.credentials = new AWS.ECSCredentials();
 
   AWS.config.update({ region });
   if (typeof config === 'string') {
