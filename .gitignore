@@ -1,0 +1,6 @@
+*node_modules*
+credits.json
+.npmignore
+.eslintrc
+*DS_Store*
+yarn.lock

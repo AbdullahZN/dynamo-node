@@ -1,0 +1,11 @@
+before_install:
+  - mkdir dynamo_local
+  - cd dynamo_local
+  - docker pull amazon/dynamodb-local
+language: node_js
+install:
+  - npm i
+node_js:
+  - "8"
+dist: trusty
+script: npm run test
