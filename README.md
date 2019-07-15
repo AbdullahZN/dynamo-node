@@ -22,7 +22,7 @@ Install package from npm or yarn
 > npm install dynamo-node || yarn add dynamo-node
 ```
 
-You can either set your AWS credentials as env variables or as a JSON file
+You can either set your AWS credentials as env variables, as a JSON file, or as an object
 
 ```js
 // AWS credentials as JSON file
@@ -37,6 +37,11 @@ Require module
 const DynamoDB = require('dynamo-node')(region [, credit_path ]);
 // e.g with json credentials
 const DynamoDB = require('dynamo-node')('eu-central-1', './credits.json');
+// e.g with js object credentials
+const DynamoDB = require('dynamo-node')('eu-central-1', {
+  'accessKeyId': 'myKey',
+  'secretAccessKey': 'yourSecret'
+});
 // e.g with env vars
 process.env.DYNAMO_ENV = 'test';
 const DynamoDB = require('dynamo-node')('eu-central-1');
